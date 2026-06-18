@@ -1,1 +1,1 @@
-# VDT-2026-Phase1MiniProject
+# VDT2026-Phase1MiniProject

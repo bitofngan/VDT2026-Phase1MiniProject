@@ -1,30 +1,20 @@
 """
-Fetch precipitation forecasts from Windy Point Forecast API.
+Fetch weather forecast data from Windy Point Forecast API.
 
-What this script does:
+This script:
 1. Loads weather stations / forecast points from data/weather_stations.csv.
-2. Sends each station's latitude/longitude to Windy Point Forecast API.
-3. Requests precipitation data only.
-4. Converts Windy's raw response into readable rows.
-5. Calculates simple flood risk using fixed thresholds.
-6. Saves one CSV file per weather station.
+2. Fetches precipitation, temperature, and wind from Windy.
+3. Saves one CSV file per weather station.
 
-Before running:
-1. Install required packages:
-   python -m pip install requests python-dotenv
-
-2. Create a file named .env in the same folder:
-   WINDY_POINT_FORECAST_KEY=your_real_windy_point_forecast_key_here
-
-3. Create:
-   data/weather_stations.csv
-
-4. Run:
-   python fetch_precipitation_forecasts.py
+Important:
+- This file does NOT calculate flood risk.
+- Flood risk is calculated later for telecom stations because each telecom station
+  has its own elevation and rainfall thresholds.
 """
 
 import os
 import csv
+import math
 import requests
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -34,7 +24,7 @@ from weather_station_loader import load_weather_stations_from_csv
 
 
 # ============================================================
-# 1. File paths
+# File paths
 # ============================================================
 
 WEATHER_STATION_CSV = "data/weather_stations.csv"
@@ -42,7 +32,7 @@ OUTPUT_DIR = "weather_forecast_outputs"
 
 
 # ============================================================
-# 2. Load Windy API key from .env
+# Load Windy API key
 # ============================================================
 
 load_dotenv()
@@ -54,21 +44,23 @@ if not WINDY_API_KEY:
 
 
 # ============================================================
-# 3. Fetch only precipitation data from Windy
+# Fetch weather data from Windy
 # ============================================================
 
-def fetch_precipitation_from_windy(latitude, longitude):
+def fetch_weather_from_windy(latitude, longitude):
     """
-    Calls Windy Point Forecast API for precipitation only.
+    Calls Windy Point Forecast API.
 
-    We request:
-        "parameters": ["precip"]
+    Requested parameters:
+        precip
+        temp
+        wind
 
-    Windy returns:
-        "past3hprecip-surface"
-
-    Meaning:
-        precipitation accumulated during the 3 hours BEFORE the forecast timestamp.
+    Windy response keys:
+        past3hprecip-surface
+        temp-surface
+        wind_u-surface
+        wind_v-surface
     """
 
     url = "https://api.windy.com/api/point-forecast/v2"
@@ -77,7 +69,7 @@ def fetch_precipitation_from_windy(latitude, longitude):
         "lat": latitude,
         "lon": longitude,
         "model": "gfs",
-        "parameters": ["precip"],
+        "parameters": ["precip", "temp", "wind"],
         "levels": ["surface"],
         "key": WINDY_API_KEY
     }
@@ -95,7 +87,7 @@ def fetch_precipitation_from_windy(latitude, longitude):
 
 
 # ============================================================
-# 4. Helper function to safely read Windy array values
+# Helpers
 # ============================================================
 
 def safe_get(data, key, index):
@@ -110,22 +102,30 @@ def safe_get(data, key, index):
     return values[index]
 
 
+def kelvin_to_celsius(kelvin):
+    if kelvin is None:
+        return None
+
+    return kelvin - 273.15
+
+
+def calculate_wind_speed_mps(wind_u, wind_v):
+    if wind_u is None or wind_v is None:
+        return None
+
+    return math.sqrt(wind_u ** 2 + wind_v ** 2)
+
+
 # ============================================================
-# 5. Parse Windy precipitation response into clean rows
+# Parse Windy response
 # ============================================================
 
-def parse_precipitation_response(raw_data, station):
+def parse_weather_response(raw_data, station):
     """
     Converts raw Windy response into clean rows.
 
-    Windy response key:
-        past3hprecip-surface
-
-    Our cleaned column:
-        precip_3h_mm
-
-    Meaning:
-        precip_3h_mm = precipitation in the 3 hours BEFORE forecast_time.
+    precip_3h_mm means:
+        precipitation accumulated during the 3 hours BEFORE forecast_time.
     """
 
     timestamps = raw_data.get("ts", [])
@@ -138,17 +138,17 @@ def parse_precipitation_response(raw_data, station):
         forecast_time_vn = forecast_time_utc.astimezone(vietnam_tz)
 
         precip_raw = safe_get(raw_data, "past3hprecip-surface", i)
+        temp_raw = safe_get(raw_data, "temp-surface", i)
+        wind_u = safe_get(raw_data, "wind_u-surface", i)
+        wind_v = safe_get(raw_data, "wind_v-surface", i)
 
-        # Windy commonly returns precipitation in metres.
-        # Convert metres to millimetres.
         precip_3h_mm = None
         if precip_raw is not None:
+            # Windy commonly returns precipitation in metres.
             precip_3h_mm = precip_raw * 1000
 
-        # Approximate average hourly precipitation over the previous 3-hour window.
-        avg_precip_1h_mm = None
-        if precip_3h_mm is not None:
-            avg_precip_1h_mm = precip_3h_mm / 3
+        temperature_c = kelvin_to_celsius(temp_raw)
+        wind_speed_mps = calculate_wind_speed_mps(wind_u, wind_v)
 
         row = {
             "weather_station_id": station["id"],
@@ -160,8 +160,9 @@ def parse_precipitation_response(raw_data, station):
             "forecast_time_utc": forecast_time_utc.isoformat(),
             "forecast_time_vn": forecast_time_vn.isoformat(),
 
-            "precip_3h_mm": precip_3h_mm,
-            "avg_precip_1h_mm": avg_precip_1h_mm,
+            "temperature_c": round(temperature_c, 2) if temperature_c is not None else None,
+            "wind_speed_mps": round(wind_speed_mps, 2) if wind_speed_mps is not None else None,
+            "precip_3h_mm": round(precip_3h_mm, 2) if precip_3h_mm is not None else None,
         }
 
         rows.append(row)
@@ -170,55 +171,7 @@ def parse_precipitation_response(raw_data, station):
 
 
 # ============================================================
-# 6. Calculate flood risk based on precipitation
-# ============================================================
-
-def add_flood_risk_to_rows(rows):
-    """
-    Adds flood risk to each forecast timestamp.
-
-    Fixed thresholds for now:
-        - avg_precip_1h_mm > 100
-        - precip_24h_mm > 200
-
-    Because Windy gives previous 3-hour precipitation:
-        precip_24h_mm = current row + previous 7 rows
-        8 rows * 3 hours = 24 hours
-    """
-
-    for i in range(len(rows)):
-        current_row = rows[i]
-
-        avg_precip_1h_mm = current_row["avg_precip_1h_mm"] or 0
-
-        # Previous 24h window:
-        # current row and previous 7 rows
-        start_index = max(0, i - 7)
-        previous_24h_rows = rows[start_index:i + 1]
-
-        precip_24h_mm = 0
-
-        for row in previous_24h_rows:
-            precip_24h_mm += row["precip_3h_mm"] or 0
-
-        exceed_1h = avg_precip_1h_mm > 100
-        exceed_24h = precip_24h_mm > 200
-
-        if exceed_1h or exceed_24h:
-            flood_risk = "HIGH"
-        else:
-            flood_risk = "SAFE"
-
-        current_row["precip_24h_mm"] = precip_24h_mm
-        current_row["exceed_1h_threshold"] = exceed_1h
-        current_row["exceed_24h_threshold"] = exceed_24h
-        current_row["flood_risk"] = flood_risk
-
-    return rows
-
-
-# ============================================================
-# 7. Export one CSV file per weather station
+# Export
 # ============================================================
 
 def export_rows_to_csv(rows, filename):
@@ -240,7 +193,7 @@ def export_rows_to_csv(rows, filename):
 
 
 # ============================================================
-# 8. Main program
+# Main
 # ============================================================
 
 def main():
@@ -250,10 +203,10 @@ def main():
 
     for station in weather_stations:
         print()
-        print("Fetching precipitation data for:", station["name"])
+        print("Fetching weather data for:", station["name"])
         print("Coordinate:", station["latitude"], station["longitude"])
 
-        raw_data = fetch_precipitation_from_windy(
+        raw_data = fetch_weather_from_windy(
             station["latitude"],
             station["longitude"]
         )
@@ -264,12 +217,11 @@ def main():
         print("Windy units:")
         print(raw_data.get("units", {}))
 
-        rows = parse_precipitation_response(raw_data, station)
-        rows = add_flood_risk_to_rows(rows)
+        rows = parse_weather_response(raw_data, station)
 
         filename = os.path.join(
             OUTPUT_DIR,
-            f"{station['id']}_precipitation_forecast.csv"
+            f"{station['id']}_weather_forecast.csv"
         )
 
         export_rows_to_csv(rows, filename)

@@ -1,0 +1,138 @@
+﻿id,name,province,latitude,longitude
+WS_TuyenQuang_01,Trạm Khí tượng Hà Giang,Tuyên Quang,22.8132,104.9823
+WS_TuyenQuang_02,Trạm Khí tượng thôn Xóm Mới Đồng Văn,Tuyên Quang,23.2743,105.3689
+WS_TuyenQuang_03,Trạm Khí tượng Thủy văn Tràng Đà,Tuyên Quang,21.8551,105.1882
+WS_TuyenQuang_04,Trạm Khí tượng Hàm Yên,Tuyên Quang,22.0574,105.0338
+WS_TuyenQuang_05,Trạm Khí tượng Hoàng Su Phì,Tuyên Quang,22.7462,104.6811
+WS_LaoCai_01,Trạm Khí tượng Sa Pa,Lào Cai,22.3362,103.8341
+WS_LaoCai_02,Trạm Khí tượng Lục Yên,Lào Cai,22.1135,104.7741
+WS_ThaiNguyen_01,Đài Khí tượng Thủy văn tỉnh Thái Nguyên,Thái Nguyên,21.5932,105.8452
+WS_ThaiNguyen_02,Trạm Khí tượng thành phố Bắc Kạn,Thái Nguyên,22.1453,105.8304
+WS_PhuTho_01,Trạm Khí tượng Hòa Bình,Phú Thọ,20.8254,105.3387
+WS_PhuTho_02,Trạm Khí tượng Mai Châu,Phú Thọ,20.6654,105.0836
+WS_PhuTho_03,Trạm Khí tượng Kim Bôi,Phú Thọ,20.6749,105.5336
+WS_PhuTho_04,Trạm Khí tượng Hạ Hòa,Phú Thọ,21.5978,105.0033
+WS_PhuTho_05,Trạm Khí tượng Phú Hộ,Phú Thọ,21.4524,105.2463
+WS_BacNinh_01,Đài Khí tượng Thủy văn khu vực Đông Bắc,Bắc Ninh,21.4021,106.7788
+WS_HungYen_01,Đài Khí tượng Thủy văn tỉnh Hưng Yên,Hưng Yên,20.6662,106.0509
+WS_HungYen_02,Trạm Khí tượng Thái Bình,Hưng Yên,20.4263,106.3748
+WS_HaiPhong_01,Trạm Khí tượng Phù Liễn,Hải Phòng,20.8329,106.6222
+WS_HaiPhong_02,Trạm Khí tượng Thủy văn Hòn Dấu,Hải Phòng,20.7174,106.7897
+WS_HaiPhong_03,Trạm Khí tượng Nông nghiệp Hải Dương,Hải Phòng,20.9715,106.2898
+WS_HaiPhong_04,Trạm Khí tượng Hải văn Bạch Long Vĩ,Hải Phòng,20.1641,107.7225
+WS_NinhBinh_01,Trạm Khí tượng Văn Lý,Ninh Bình,20.1356,106.2944
+WS_NinhBinh_02,Đài Khí tượng Thủy văn tỉnh Ninh Bình,Ninh Bình,20.2619,105.9896
+WS_NinhBinh_03,Trạm Khí tượng môi trường nền vùng Cúc Phương,Ninh Bình,20.2619,105.7204
+WS_NinhBinh_04,Trạm Khí tượng Nam Định,Ninh Bình,20.4524,106.1681
+WS_NinhBinh_05,Trạm Khí tượng Hà Nam,Ninh Bình,20.5255,105.9234
+WS_NinhBinh_06,Trạm Khí tượng Nho Quan,Ninh Bình,20.3267,105.7461
+WS_QuangTri_01,Đài Khí tượng Thủy văn tỉnh Quảng Trị,Quảng Trị,16.8028,107.0919
+WS_QuangTri_02,Trạm Khí tượng Hải văn Cồn Cỏ,Quảng Trị,17.1648,107.3437
+WS_QuangTri_03,Trạm Khí tượng Đồng Hới,Quảng Trị,17.4892,106.5994
+WS_QuangTri_04,Trạm Khí tượng Đông Hà,Quảng Trị,16.8557,107.0791
+WS_QuangTri_05,Trạm Khí tượng Ba Đồn,Quảng Trị,17.7584,106.4319
+WS_QuangTri_06,Trạm Khí tượng Tuyên Hóa,Quảng Trị,17.8849,106.0151
+WS_DaNang_01,Đài Khí tượng Thủy văn Trung Trung Bộ,Đà Nẵng,16.0428,108.2061
+WS_DaNang_02,Trạm Khí tượng Trà My,Đà Nẵng,15.3371,108.2222
+WS_DaNang_03,Đài Khí tượng Thủy văn Quảng Nam,Đà Nẵng,15.5536,108.4974
+WS_DaNang_04,Trạm Khí tượng Tam Kỳ,Đà Nẵng,15.5666,108.4623
+WS_QuangNgai_01,Đài Khí tượng Thủy văn tỉnh Quảng Ngãi,Quảng Ngãi,15.1202,108.7918
+WS_QuangNgai_02,Đài Khí tượng Thủy văn Kon Tum,Quảng Ngãi,14.3602,107.9995
+WS_QuangNgai_03,Trạm Khí tượng Đắk Tô,Quảng Ngãi,14.6471,107.8458
+WS_QuangNgai_04,Trạm Khí tượng Hải văn Lý Sơn,Quảng Ngãi,15.3866,109.1413
+WS_QuangNgai_05,Trạm Khí tượng Ba Tơ,Quảng Ngãi,14.7678,108.7358
+WS_GiaLai_01,Trạm Khí tượng Pleiku,Gia Lai,14.0351,107.9852
+WS_GiaLai_02,Trạm Khí tượng Ialy,Gia Lai,14.2188,107.8388
+WS_GiaLai_03,Đài Khí tượng Thủy văn Bình Định,Gia Lai,13.7651,109.2262
+WS_GiaLai_04,Trạm Khí tượng An Khê,Gia Lai,13.9507,108.6462
+WS_KhanhHoa_01,Đài Khí tượng Thủy văn khu vực Nam Trung Bộ,Khánh Hòa,12.2501,109.1948
+WS_KhanhHoa_02,Trạm Khí tượng Cam Ranh,Khánh Hòa,11.9183,109.1509
+WS_KhanhHoa_03,Trạm quan trắc khí tượng cao không NT1,Khánh Hòa,11.4266,109.0009
+WS_KhanhHoa_04,Trạm Khí tượng Thủy văn Phan Rang,Khánh Hòa,11.5808,108.9743
+WS_KhanhHoa_05,Trạm Khí tượng Nha Trang,Khánh Hòa,12.2192,109.2051
+WS_LamDong_01,Đài Khí tượng Thủy văn Lâm Đồng,Lâm Đồng,11.9527,108.4455
+WS_LamDong_02,Trạm Khí tượng Đà Lạt,Lâm Đồng,11.8854,108.5675
+WS_LamDong_03,Trạm Khí tượng Thủy văn Lâm Đồng chi nhánh Đắk Nông,Lâm Đồng,12.0001,107.6977
+WS_LamDong_04,Đài Khí tượng Thủy văn Bình Thuận,Lâm Đồng,10.9191,108.1076
+WS_LamDong_05,Trạm Khí tượng Thủy văn Phan Thiết,Lâm Đồng,10.9259,108.1030
+WS_LamDong_06,Trạm Khí tượng Bảo Lộc,Lâm Đồng,11.5501,107.8066
+WS_LamDong_07,Trạm Khí tượng La Gi,Lâm Đồng,10.6817,107.7544
+WS_DakLak_01,Trạm Khí tượng Buôn Ma Thuột,Đắk Lắk,12.6670,108.0497
+WS_DakLak_02,Trạm Khí tượng Thủy văn Ea Hleo,Đắk Lắk,13.2156,108.2021
+WS_DakLak_03,Đài Khí tượng Thủy văn Mdrắk,Đắk Lắk,12.7166,108.7601
+WS_DakLak_04,Trạm Khí tượng Nông nghiệp Eakmat,Đắk Lắk,12.6729,108.1033
+WS_DakLak_05,Trạm Khí tượng Thủy văn Buôn Hồ,Đắk Lắk,12.9134,108.2627
+WS_DakLak_06,Đài Khí tượng Thủy văn Phú Yên,Đắk Lắk,13.0863,109.2970
+WS_TPHCM_01,Đài Khí tượng Thủy văn khu vực Nam Bộ,TPHCM,10.7844,106.7003
+WS_TPHCM_02,Trạm Khí tượng Thủ Dầu Một,TPHCM,11.0414,106.6351
+WS_TPHCM_03,Đài Khí tượng Thủy văn Bà Rịa Vũng Tàu,TPHCM,10.3681,107.0841
+WS_TPHCM_04,Trạm Khí tượng Tân Sơn Hòa,TPHCM,10.7956,106.6667
+WS_DongNai_01,Trạm Khí tượng Biên Hòa,Đồng Nai,10.9585,106.8586
+WS_DongNai_02,Trạm Khí tượng Long Khánh,Đồng Nai,10.9408,107.2406
+WS_DongNai_03,Trạm Khí tượng Tà Lài,Đồng Nai,11.3737,107.3688
+WS_DongNai_04,Trạm Khí tượng Trị An,Đồng Nai,11.0989,107.0454
+WS_DongNai_05,Trạm Khí tượng Thủy văn Phước Long,Đồng Nai,11.8515,106.9949
+WS_TayNinh_01,Đài Khí tượng Thủy văn Tây Ninh,Tây Ninh,11.3306,106.1056
+WS_TayNinh_02,Trạm Khí tượng Mộc Hóa,Tây Ninh,10.7535,105.9335
+WS_TayNinh_03,Trung tâm dự báo khí tượng thủy văn Long An,Tây Ninh,10.5424,106.4037
+WS_CanTho_01,Đài Khí tượng Thủy văn Cần Thơ,Cần Thơ,10.0303,105.7681
+WS_CanTho_02,Trạm Khí tượng Vị Thanh,Cần Thơ,9.8176,105.4579
+WS_VinhLong_01,Đài Khí tượng Thủy văn Vĩnh Long,Vĩnh Long,10.2744,105.9263
+WS_VinhLong_02,Đài Khí tượng Thủy văn Bến Tre,Vĩnh Long,10.2417,106.3651
+WS_VinhLong_03,Trạm Khí tượng Càng Long,Vĩnh Long,9.9928,106.2031
+WS_VinhLong_04,Đài Khí tượng Thủy văn Trà Vinh,Vĩnh Long,9.9397,106.3407
+WS_DongThap_01,Trạm Khí tượng Cao Lãnh,Đồng Tháp,10.4708,105.6478
+WS_DongThap_02,Đài Khí tượng Thủy văn Đồng Tháp,Đồng Tháp,10.4171,105.6444
+WS_DongThap_03,Trạm Khí tượng Mỹ Tho,Đồng Tháp,10.3531,106.3976
+WS_DongThap_04,Trạm Khí tượng Sông Tiền,Đồng Tháp,10.8589,105.3404
+WS_CaMau_01,Trạm Khí tượng Cà Mau,Cà Mau,9.1747,105.1782
+WS_CaMau_02,Trạm Khí tượng Bạc Liêu,Cà Mau,9.2960,105.7138
+WS_AnGiang_01,Trạm Khí tượng Hải văn Thổ Chu,An Giang,9.3016,103.4998
+WS_AnGiang_02,Trạm Khí tượng Châu Đốc,An Giang,10.7041,105.1305
+WS_AnGiang_03,Đài Khí tượng Thủy văn An Giang,An Giang,10.3856,105.4363
+WS_AnGiang_04,Trạm Khí tượng Rạch Giá,An Giang,10.0118,105.0772
+WS_AnGiang_05,Trạm Khí tượng Hải văn Phú Quốc,An Giang,10.2167,103.9571
+WS_HaNoi_01,Trạm Khí tượng Thủy văn Nông nghiệp Ba Vì,Hà Nội,21.1027,105.4298
+WS_HaNoi_02,Trạm Khí tượng e916,Hà Nội,21.0484,105.4927
+WS_Hanoi_03,Trạm Khí tượng Hà Đông,Hà Nội,20.9569,105.7531
+WS_Hue_01,Đài Khí tượng Thủy văn Thành phố Huế,Huế,16.4541,107.5853
+WS_Hue_02,Trạm Khí tượng A Lưới,Huế,16.2327,107.2696
+WS_LaiChau_01,Trạm Khí tượng Mường Tè,Lai Châu,22.3867,102.8025
+WS_LaiChau_02,Trạm Khí tượng Tam Đường,Lai Châu,22.3989,103.4623
+WS_LaiChau_03,Trạm Khí tượng Thủy văn Sìn Hồ,Lai Châu,22.3590,103.2495
+WS_LaiChau_04,Đài Khí tượng Thủy văn Lai Châu,Lai Châu,22.3863,103.4682
+WS_LaiChau_05,Trạm Khí tượng Bình Lư,Lai Châu,22.3209,103.6289
+WS_LaiChau_06,Trạm Khí tượng Than Uyên,Lai Châu,21.9500,103.9000
+WS_SonLa_01,Trạm Khí tượng Sơn La,Sơn La,21.3330,103.9062
+WS_SonLa_02,Trạm Khí tượng Yên Châu,Sơn La,21.0471,104.2985
+WS_SonLa_03,Trạm Khí tượng Sông Mã,Sơn La,21.0508,103.7444
+WS_SonLa_04,Trạm Khí tượng Cò Nòi,Sơn La,21.1332,104.1556
+WS_SonLa_05,Trạm Khí tượng Phù Yên,Sơn La,21.2625,104.6478
+WS_DienBien_01,Đài Khí tượng Thủy văn Điện Biên,Điện Biên,21.3572,103.0091
+WS_DienBien_02,Trạm Khí tượng Pha Đin,Điện Biên,21.5712,103.5170
+WS_CaoBang_01,Trạm Khí tượng TP Cao Bằng,Cao Bằng,22.6641,106.2506
+WS_CaoBang_02,Trạm Khí tượng Thủy văn Tân Giang,Cao Bằng,22.6521,106.2709
+WS_LangSon_01,Trạm Khí tượng Lạng Sơn,Lạng Sơn,21.8303,106.7686
+WS_LangSon_02,Trạm Khí tượng Hữu Lũng,Lạng Sơn,21.5118,106.3539
+WS_LangSon_03,Trạm Khí tượng Bắc Sơn,Lạng Sơn,21.9169,106.3366
+WS_QuangNinh_01,Trạm Khí tượng Tiên Yên,Quảng Ninh,21.3274,107.4154
+WS_QuangNinh_02,Trạm Khí tượng Hải văn Cửa Ông,Quảng Ninh,21.0327,107.3599
+WS_QuangNinh_03,Trạm Khí tượng Quảng Hà,Quảng Ninh,21.4561,107.7530
+WS_QuangNinh_04,Trạm Khí tượng Móng Cái,Quảng Ninh,21.5185,107.9819
+WS_QuangNinh_05,Trạm Khí tượng Bãi Cháy,Quảng Ninh,20.9617,107.0601
+WS_QuangNinh_06,Trạm Khí tượng Nam Hải,Quảng Ninh,20.9759,107.7721
+WS_ThanhHoa_01,Đài Khí tượng Thủy văn Thanh Hóa,Thanh Hóa,19.7619,105.7774
+WS_ThanhHoa_02,Trạm Khí tượng Sầm Sơn,Thanh Hóa,19.7410,105.9040
+WS_NgheAn_01,Đài Khí tượng Thủy văn Khu vực Bắc Trung Bộ,Nghệ An,18.6760,105.6905
+WS_NgheAn_02,Trạm Khí tượng Thủy văn Nam Đàn,Nghệ An,18.6969,105.4962
+WS_NgheAn_03,Trạm Khí tượng Con Cuông,Nghệ An,19.0507,104.8844
+WS_NgheAn_04,Trạm Khí tượng Tây Hiếu,Nghệ An,19.3245,105.4139
+WS_NgheAn_05,Trạm Khí tượng Tương Dương,Nghệ An,19.2635,104.4712
+WS_NgheAn_06,Trạm Khí tượng Đô Lương,Nghệ An,18.8984,105.3067
+WS_NgheAn_07,Trạm Khí tượng Quỳnh Lưu,Nghệ An,19.1410,105.6420
+WS_NgheAn_08,Trạm Khí tượng Quỳ Châu,Nghệ An,19.5542,105.0938
+WS_NgheAn_09,Trạm Khí tượng Quỳ Hợp,Nghệ An,19.3228,105.1884
+WS_HaTinh_01,Trạm Khí tượng Hải văn Môi trường Hoành Sơn,Hà Tĩnh,17.9877,106.4780
+WS_HaTinh_02,Trạm Khí tượng Thủy văn Chu Lễ,Hà Tĩnh,18.1698,105.7089
+WS_HaTinh_03,Trạm Khí tượng Hương Khê,Hà Tĩnh,18.1783,105.7015
+WS_HaTinh_04,Trạm Khí tượng Kỳ Anh,Hà Tĩnh,18.0867,106.2854

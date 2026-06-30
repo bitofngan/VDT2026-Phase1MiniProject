@@ -21,7 +21,7 @@ FLOOD_RISK_UNKNOWN = "UNKNOWN"
 
 # Use 20 for quick testing.
 # Change to None after everything works.
-PROCESS_LIMIT = 20
+PROCESS_LIMIT = None
 
 CALCULATE_RISK_OUTSIDE_RADIUS = True
 

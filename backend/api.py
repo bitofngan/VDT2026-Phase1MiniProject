@@ -24,39 +24,47 @@ def get_connection():
 
 
 @app.get("/api/stations")
-def get_stations(provinces: list[str] = Query(default=[])):
+def get_stations():
     conn = get_connection()
     cursor = conn.cursor()
 
-    if provinces:
-        placeholders = ",".join(["?"] * len(provinces))
-        query = f"""
+    cursor.execute("""
+        WITH ranked_risk AS (
             SELECT
-                id,
-                name,
-                province,
-                latitude,
-                longitude,
-                elevation,
-                flood_risk
-            FROM telecom_stations
-            WHERE province IN ({placeholders})
-            LIMIT 10000
-        """
-        cursor.execute(query, provinces)
-    else:
-        cursor.execute("""
-            SELECT
-                id,
-                name,
-                province,
-                latitude,
-                longitude,
-                elevation,
-                flood_risk
-            FROM telecom_stations
-            LIMIT 10000
-        """)
+                *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY telecom_station_id
+                    ORDER BY
+                        CASE flood_risk
+                            WHEN 'HIGH' THEN 4
+                            WHEN 'MEDIUM' THEN 3
+                            WHEN 'LOW' THEN 2
+                            WHEN 'SAFE' THEN 1
+                            ELSE 0
+                        END DESC,
+                        precip_24h_mm DESC
+                ) AS rn
+            FROM telecom_flood_risk_forecast
+        )
+        SELECT
+            ts.id,
+            ts.name,
+            ts.new_province AS province,
+            ts.latitude,
+            ts.longitude,
+            ts.elevation_m,
+            rr.flood_risk,
+            rr.risk_reason,
+            rr.precip_3h_mm,
+            rr.precip_24h_mm,
+            rr.forecast_time_vn
+        FROM telecom_station ts
+        LEFT JOIN ranked_risk rr
+            ON ts.id = rr.telecom_station_id
+            AND rr.rn = 1
+        ORDER BY ts.id
+        LIMIT 10000
+    """)
 
     rows = cursor.fetchall()
     conn.close()
@@ -69,10 +77,10 @@ def get_provinces():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT DISTINCT province
-        FROM telecom_stations
-        WHERE province IS NOT NULL
-        ORDER BY province
+        SELECT DISTINCT new_province AS province
+        FROM telecom_station
+        WHERE new_province IS NOT NULL
+        ORDER BY new_province
     """)
 
     rows = cursor.fetchall()

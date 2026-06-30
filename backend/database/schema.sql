@@ -66,3 +66,20 @@ CREATE TABLE telecom_flood_risk_forecast (
     FOREIGN KEY (telecom_station_id) REFERENCES telecom_station(id),
     FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
 );
+
+CREATE TABLE IF NOT EXISTS weather_current_observation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    weather_station_id TEXT NOT NULL,
+    observation_time TEXT,
+    last_updated TEXT,
+    temp_c REAL,
+    wind_kph REAL,
+    wind_mps REAL,
+    precip_mm REAL,
+    humidity INTEGER,
+    pressure_mb REAL,
+    condition_text TEXT,
+    source TEXT DEFAULT 'WeatherAPI',
+    fetched_at TEXT,
+    FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
+);

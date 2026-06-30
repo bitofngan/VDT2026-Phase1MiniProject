@@ -33,6 +33,7 @@ def main():
     print_count(connection, "weather_forecast")
     print_count(connection, "telecom_weather_station_mapping")
     print_count(connection, "telecom_flood_risk_forecast")
+    print_count(connection, "weather_current_observation")
 
     print()
     print("Flood risk distribution:")

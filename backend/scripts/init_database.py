@@ -1,7 +1,16 @@
-from database.db_connection import get_connection
+import sys
+from pathlib import Path
 
 
-SCHEMA_FILE = "database/schema.sql"
+SCRIPT_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = SCRIPT_DIR.parent
+
+sys.path.append(str(BACKEND_DIR))
+
+from database.db_connection import get_connection, DATABASE_FILE
+
+
+SCHEMA_FILE = BACKEND_DIR / "database" / "schema.sql"
 
 
 def main():
@@ -15,7 +24,7 @@ def main():
     connection.close()
 
     print("Database initialized successfully.")
-    print("Created database file: data/flood_warning.db")
+    print("Created database file:", DATABASE_FILE)
 
 
 if __name__ == "__main__":

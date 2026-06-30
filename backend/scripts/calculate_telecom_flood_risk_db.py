@@ -1,4 +1,12 @@
+import sys
+from pathlib import Path
 from math import radians, sin, cos, sqrt, atan2
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = SCRIPT_DIR.parent
+
+sys.path.append(str(BACKEND_DIR))
 
 from database.db_connection import get_connection
 
@@ -11,8 +19,8 @@ FLOOD_RISK_MEDIUM = "MEDIUM"
 FLOOD_RISK_HIGH = "HIGH"
 FLOOD_RISK_UNKNOWN = "UNKNOWN"
 
-# Set to None to process all.
-# Use 20 first to test quickly.
+# Use 20 for quick testing.
+# Change to None after everything works.
 PROCESS_LIMIT = 20
 
 CALCULATE_RISK_OUTSIDE_RADIUS = True
@@ -37,14 +45,13 @@ def haversine_distance_km(lat1, lon1, lat2, lon2):
 
 
 def get_all_weather_stations(connection):
-    rows = connection.execute(
+    return connection.execute(
         """
         SELECT *
         FROM weather_station
+        ORDER BY id
         """
     ).fetchall()
-
-    return rows
 
 
 def get_telecom_stations(connection):
@@ -57,9 +64,7 @@ def get_telecom_stations(connection):
     if PROCESS_LIMIT is not None:
         query += f" LIMIT {PROCESS_LIMIT}"
 
-    rows = connection.execute(query).fetchall()
-
-    return rows
+    return connection.execute(query).fetchall()
 
 
 def find_nearest_weather_station(telecom_station, weather_stations):
@@ -90,9 +95,9 @@ def find_nearest_weather_station(telecom_station, weather_stations):
 
 
 def save_mapping(connection, telecom_station, weather_station, distance_km, status):
-    if weather_station is None:
-        weather_station_id = None
-    else:
+    weather_station_id = None
+
+    if weather_station is not None:
         weather_station_id = weather_station["id"]
 
     connection.execute(
@@ -117,7 +122,7 @@ def save_mapping(connection, telecom_station, weather_station, distance_km, stat
 
 
 def get_weather_forecasts(connection, weather_station_id):
-    rows = connection.execute(
+    return connection.execute(
         """
         SELECT *
         FROM weather_forecast
@@ -127,8 +132,6 @@ def get_weather_forecasts(connection, weather_station_id):
         (weather_station_id,)
     ).fetchall()
 
-    return rows
-
 
 def clear_previous_results(connection):
     connection.execute("DELETE FROM telecom_weather_station_mapping")
@@ -136,16 +139,13 @@ def clear_previous_results(connection):
 
 
 def bool_to_int(value):
-    if value:
-        return 1
-
-    return 0
+    return 1 if value else 0
 
 
 def insert_unknown_risk(connection, telecom_station, weather_station, reason):
-    if weather_station is None:
-        weather_station_id = None
-    else:
+    weather_station_id = None
+
+    if weather_station is not None:
         weather_station_id = weather_station["id"]
 
     connection.execute(
@@ -198,6 +198,10 @@ def calculate_and_save_flood_risk(connection, telecom_station, weather_station, 
         weather_row = weather_rows[i]
 
         precip_3h_mm = weather_row["precip_3h_mm"]
+
+        if precip_3h_mm is None:
+            precip_3h_mm = 0
+
         avg_precip_1h_mm = precip_3h_mm / 3
 
         start_index = max(0, i - 7)
@@ -206,7 +210,12 @@ def calculate_and_save_flood_risk(connection, telecom_station, weather_station, 
         precip_24h_mm = 0
 
         for row in previous_24h_rows:
-            precip_24h_mm += row["precip_3h_mm"]
+            row_precip = row["precip_3h_mm"]
+
+            if row_precip is None:
+                row_precip = 0
+
+            precip_24h_mm += row_precip
 
         exceed_1h_threshold = avg_precip_1h_mm > estimated_1h_high_threshold
         exceed_24h_threshold = precip_24h_mm >= high_threshold_24h
@@ -353,7 +362,7 @@ def main():
 
     print()
     print("Done.")
-    print("Results saved into data/flood_warning.db")
+    print("Results saved into backend/database/flood_risk.db")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
+import { useEffect, useState } from "react";
 import { Map, AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
-import { sampleStations } from "../data/sampleStations";
 
 function getRiskColor(risk) {
   if (risk === "HIGH") return "#d32f2f";
@@ -8,6 +8,15 @@ function getRiskColor(risk) {
 }
 
 export default function StationMap() {
+  const [stations, setStations] = useState([]);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/stations")
+      .then((res) => res.json())
+      .then((data) => setStations(data))
+      .catch((err) => console.error("Failed to load stations:", err));
+  }, []);
+
   return (
     <Map
       defaultCenter={{ lat: 16.0544, lng: 108.2022 }}
@@ -15,13 +24,16 @@ export default function StationMap() {
       mapId="telecom-flood-risk-map"
       style={{ width: "100%", height: "100vh" }}
     >
-      {sampleStations.map((station) => (
+      {stations.map((station) => (
         <AdvancedMarker
           key={station.id}
-          position={{ lat: station.latitude, lng: station.longitude }}
+          position={{
+            lat: Number(station.latitude),
+            lng: Number(station.longitude),
+          }}
           title={station.name}
         >
-          <Pin background={getRiskColor(station.floodRisk)} />
+          <Pin background={getRiskColor(station.flood_risk)} />
         </AdvancedMarker>
       ))}
     </Map>

@@ -1,13 +1,21 @@
 import csv
 import glob
-import os
+import sys
+from pathlib import Path
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = SCRIPT_DIR.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+
+sys.path.append(str(BACKEND_DIR))
 
 from database.db_connection import get_connection
 
 
-WEATHER_STATION_CSV = "data/weather_stations.csv"
-TELECOM_STATION_CSV = "data/telecom_stations_with_thresholds.csv"
-WEATHER_FORECAST_DIR = "weather_forecast_outputs"
+WEATHER_STATION_CSV = PROJECT_ROOT / "data" / "weather_stations.csv"
+TELECOM_STATION_CSV = PROJECT_ROOT / "data" / "telecom_stations_with_thresholds.csv"
+WEATHER_FORECAST_DIR = PROJECT_ROOT / "weather_forecast_outputs"
 
 
 def safe_float(value, default=None):
@@ -20,15 +28,32 @@ def safe_float(value, default=None):
     return float(value)
 
 
+def get_required(row, possible_names):
+    for name in possible_names:
+        if name in row and row[name] != "":
+            return row[name]
+
+    raise KeyError(f"Missing required column. Expected one of: {possible_names}")
+
+
 def import_weather_stations(connection):
     print("Importing weather stations...")
+    print("Weather station CSV:", WEATHER_STATION_CSV)
 
     with open(WEATHER_STATION_CSV, mode="r", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
 
+        print("Weather station CSV columns found:", reader.fieldnames)
+
         count = 0
 
         for row in reader:
+            station_id = get_required(row, ["id", "station_id"])
+            name = get_required(row, ["name", "station_name"])
+            province = get_required(row, ["province"])
+            latitude = float(get_required(row, ["latitude", "lat"]))
+            longitude = float(get_required(row, ["longitude", "lon", "lng"]))
+
             connection.execute(
                 """
                 INSERT OR REPLACE INTO weather_station (
@@ -41,11 +66,11 @@ def import_weather_stations(connection):
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (
-                    row["id"],
-                    row["name"],
-                    row["province"],
-                    float(row["latitude"]),
-                    float(row["longitude"]),
+                    station_id,
+                    name,
+                    province,
+                    latitude,
+                    longitude,
                 )
             )
 
@@ -55,10 +80,14 @@ def import_weather_stations(connection):
 
 
 def import_telecom_stations(connection):
+    print()
     print("Importing telecom stations...")
+    print("Telecom station CSV:", TELECOM_STATION_CSV)
 
     with open(TELECOM_STATION_CSV, mode="r", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
+
+        print("Telecom station CSV columns found:", reader.fieldnames)
 
         count = 0
 
@@ -101,11 +130,19 @@ def import_telecom_stations(connection):
 
 
 def import_weather_forecasts(connection):
+    print()
     print("Importing weather forecasts...")
+    print("Weather forecast folder:", WEATHER_FORECAST_DIR)
 
     forecast_files = glob.glob(
-        os.path.join(WEATHER_FORECAST_DIR, "*_weather_forecast.csv")
+        str(WEATHER_FORECAST_DIR / "*_weather_forecast.csv")
     )
+
+    if not forecast_files:
+        print("WARNING: No weather forecast CSV files found.")
+        print("Expected files like:")
+        print(WEATHER_FORECAST_DIR / "WS_HN_01_weather_forecast.csv")
+        return
 
     total_count = 0
 
@@ -143,8 +180,19 @@ def import_weather_forecasts(connection):
     print("Weather forecast rows imported:", total_count)
 
 
+def clear_imported_tables(connection):
+    connection.execute("DELETE FROM telecom_flood_risk_forecast")
+    connection.execute("DELETE FROM telecom_weather_station_mapping")
+    connection.execute("DELETE FROM weather_forecast")
+    connection.execute("DELETE FROM telecom_station")
+    connection.execute("DELETE FROM weather_station")
+
+
 def main():
     connection = get_connection()
+
+    print("Clearing old imported data...")
+    clear_imported_tables(connection)
 
     import_weather_stations(connection)
     import_telecom_stations(connection)

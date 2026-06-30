@@ -1,14 +1,17 @@
 from math import radians, sin, cos, sqrt, atan2
 
 
-# Universal system rule, not station data.
-MAX_RADIUS_KM = 30
+# For proof-of-concept, 100 km is reasonable because these are forecast points,
+# not dense physical weather stations.
+MAX_RADIUS_KM = 100
 
 
 def haversine_distance_km(lat1, lon1, lat2, lon2):
     """
-    Calculate distance between two coordinates using Haversine formula.
-    Output is in kilometres.
+    Calculate distance between two latitude/longitude coordinates.
+
+    Returns:
+        distance in kilometres
     """
 
     earth_radius_km = 6371
@@ -30,17 +33,17 @@ def haversine_distance_km(lat1, lon1, lat2, lon2):
 
 def find_nearest_weather_station(latitude, longitude, weather_stations):
     """
-    Given a coordinate, find the closest weather station / forecast point.
+    Find the nearest weather station / forecast point for one coordinate.
 
     Input:
         latitude, longitude:
-            target coordinate, for example a telecom station
+            telecom station coordinate
 
         weather_stations:
-            list of weather station dictionaries
+            list loaded from data/weather_stations.csv
 
     Output:
-        dictionary with:
+        dictionary containing:
             station
             distance_km
             max_radius_km
@@ -70,10 +73,10 @@ def find_nearest_weather_station(latitude, longitude, weather_stations):
             nearest_station = station
             nearest_distance = distance
 
-    if nearest_distance > MAX_RADIUS_KM:
-        status = "outside_max_radius"
-    else:
+    if nearest_distance <= MAX_RADIUS_KM:
         status = "within_radius"
+    else:
+        status = "outside_max_radius"
 
     return {
         "station": nearest_station,

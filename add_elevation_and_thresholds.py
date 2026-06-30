@@ -214,7 +214,7 @@ def main():
         print()
         print("Example:")
         print(
-            "python .\\add_elevation_and_threshold.py "
+            "python .\\add_elevation_and_thresholds.py "
             "data\\telecom_stations_part_1.csv "
             "data\\telecom_stations_part_1_with_thresholds.csv"
         )

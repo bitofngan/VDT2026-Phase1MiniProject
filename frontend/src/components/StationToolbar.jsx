@@ -1,88 +1,129 @@
+function buildForecastOptions(forecastTimes) {
+  const options = [
+    {
+      value: "WORST",
+      label: "Worst risk in next 7 days",
+    },
+  ];
+
+  forecastTimes.forEach((time, index) => {
+    const hoursAhead = (index + 1) * 3;
+
+    let label = `Next ${hoursAhead} hours`;
+
+    if (hoursAhead === 24) label = "Next 24 hours";
+
+    if (hoursAhead > 24 && hoursAhead % 24 === 0) {
+      label = `Day ${hoursAhead / 24}`;
+    }
+
+    if (hoursAhead > 24 && hoursAhead % 24 !== 0) {
+      label = `Day ${Math.floor(hoursAhead / 24)} + ${hoursAhead % 24}h`;
+    }
+
+    options.push({
+      value: time,
+      label,
+    });
+  });
+
+  return options;
+}
+
 export default function StationToolbar({
   mode,
   province,
   provinces,
   forecastTimes,
   selectedForecastTime,
+  riskFilter,
   stationCount,
-  isRefreshing,
-  refreshDisabled,
   lastUpdated,
   onModeChange,
   onProvinceChange,
+  onRiskFilterChange,
   onForecastTimeChange,
-  onRefresh,
 }) {
+  const forecastOptions = buildForecastOptions(forecastTimes);
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 12,
-        left: 12,
-        zIndex: 10,
-        background: "white",
-        padding: 10,
-        borderRadius: 8,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        width: 210,
-      }}
-    >
-      <select
-        value={mode}
-        onChange={(e) => onModeChange(e.target.value)}
-        style={{ width: "100%" }}
-      >
-        <option value="current">Current weather</option>
-        <option value="forecast">Forecast flood risk</option>
-      </select>
+    <div className="station-toolbar">
+      <div className="toolbar-top">
+        <div>
+          <h2>Vietnam Station Map</h2>
+          <p>
+            {stationCount} stations shown
+            {lastUpdated ? ` · Updated ${lastUpdated.toLocaleTimeString()}` : ""}
+          </p>
+        </div>
 
-      <select
-        value={province}
-        onChange={(e) => onProvinceChange(e.target.value)}
-        style={{ width: "100%", marginTop: 8 }}
-      >
-        <option value="ALL">All provinces</option>
-        {provinces.map((provinceName) => (
-          <option key={provinceName} value={provinceName}>
-            {provinceName}
-          </option>
-        ))}
-      </select>
+        <div className="map-tabs">
+          <button
+            className={mode === "forecast" ? "map-tab active" : "map-tab"}
+            onClick={() => onModeChange("forecast")}
+          >
+            Forecast Risk
+          </button>
 
-      {mode === "forecast" && (
-        <select
-          value={selectedForecastTime}
-          onChange={(e) => onForecastTimeChange(e.target.value)}
-          style={{ width: "100%", marginTop: 8 }}
-        >
-          <option value="WORST">Worst risk in forecast</option>
-          {forecastTimes.map((time) => (
-            <option key={time} value={time}>
-              {time}
-            </option>
-          ))}
-        </select>
-      )}
-
-      <div style={{ fontSize: 12, marginTop: 6 }}>
-        {stationCount} stations
+          <button
+            className={mode === "current" ? "map-tab active" : "map-tab"}
+            onClick={() => onModeChange("current")}
+          >
+            Current Weather
+          </button>
+        </div>
       </div>
 
-      <button
-        onClick={onRefresh}
-        disabled={refreshDisabled}
-        style={{
-          marginTop: 8,
-          width: "100%",
-          padding: "6px",
-          cursor: refreshDisabled ? "not-allowed" : "pointer",
-        }}
+      <div
+        className={
+          mode === "forecast"
+            ? "toolbar-filters three-columns"
+            : "toolbar-filters two-columns"
+        }
       >
-        {isRefreshing ? "Refreshing..." : "Refresh data"}
-      </button>
+        <label className="filter-field">
+          <span>Province</span>
+          <select value={province} onChange={(e) => onProvinceChange(e.target.value)}>
+            <option value="ALL">All provinces</option>
+            {provinces.map((provinceName) => (
+              <option key={provinceName} value={provinceName}>
+                {provinceName}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div style={{ fontSize: 11, marginTop: 6 }}>
-        Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : "Never"}
+        <label className="filter-field">
+          <span>Risk level</span>
+          <select
+            value={riskFilter}
+            onChange={(e) => onRiskFilterChange(e.target.value)}
+          >
+            <option value="ALL">All risk levels</option>
+            <option value="AT_RISK">At risk only</option>
+            <option value="UNKNOWN">Unknown</option>
+            <option value="SAFE">Safe</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </label>
+
+        {mode === "forecast" && (
+          <label className="filter-field">
+            <span>Forecast time</span>
+            <select
+              value={selectedForecastTime}
+              onChange={(e) => onForecastTimeChange(e.target.value)}
+            >
+              {forecastOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Map } from "@vis.gl/react-google-maps";
+import { useMemo, useState } from "react";
+import { Map as GoogleMap } from "@vis.gl/react-google-maps";
 
 import StationToolbar from "./StationToolbar";
 import StationInfoPanel from "./StationInfoPanel";
@@ -8,8 +8,13 @@ import ProvinceBoundary from "./ProvinceBoundary";
 import ClusteredStationMarkers from "./ClusteredStationMarkers";
 import FloodAffectedZones from "./FloodAffectedZones";
 
-const AUTO_REFRESH_MS = 30 * 60 * 1000;
-const MANUAL_REFRESH_COOLDOWN_MS = 2 * 60 * 1000;
+const RISK_ORDER = {
+  HIGH: 4,
+  MEDIUM: 3,
+  LOW: 2,
+  SAFE: 1,
+  UNKNOWN: 0,
+};
 
 function normalizeProvinceName(text) {
   return String(text || "")
@@ -38,85 +43,89 @@ function cleanProvinceName(province) {
   return province;
 }
 
-export default function StationMap() {
-  const [stations, setStations] = useState([]);
+function getStationId(station) {
+  return station.id || station.station_id || station.telecom_station_id;
+}
+
+function getRiskLevel(station) {
+  return String(
+    station.risk_level || station.flood_risk || station.risk || "UNKNOWN"
+  ).toUpperCase();
+}
+
+function isAtRisk(station) {
+  const risk = getRiskLevel(station);
+  return risk === "LOW" || risk === "MEDIUM" || risk === "HIGH";
+}
+
+function getWorstForecastByStation(forecastStations) {
+  const result = new Map();
+
+  forecastStations.forEach((station) => {
+    const id = getStationId(station);
+    if (!id) return;
+
+    const currentRisk = getRiskLevel(station);
+    const existing = result.get(id);
+
+    if (!existing) {
+      result.set(id, station);
+      return;
+    }
+
+    const existingRisk = getRiskLevel(existing);
+
+    if ((RISK_ORDER[currentRisk] || 0) > (RISK_ORDER[existingRisk] || 0)) {
+      result.set(id, station);
+    }
+  });
+
+  return result;
+}
+
+export default function StationMap({
+  pageType = "overview",
+  currentStations = [],
+  forecastStations = [],
+  forecastTimes = [],
+  lastUpdated,
+  isRefreshing,
+  refreshNow,
+}) {
   const [selectedStation, setSelectedStation] = useState(null);
 
   const [mode, setMode] = useState("forecast");
   const [province, setProvince] = useState("ALL");
-
-  const [forecastTimes, setForecastTimes] = useState([]);
+  const [riskFilter, setRiskFilter] = useState("ALL");
   const [selectedForecastTime, setSelectedForecastTime] = useState("WORST");
 
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [lastManualRefresh, setLastManualRefresh] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const worstForecastByStation = useMemo(() => {
+    return getWorstForecastByStation(forecastStations);
+  }, [forecastStations]);
 
-  function fetchStations() {
-    setIsRefreshing(true);
+  const currentStationsWithRisk = useMemo(() => {
+    return currentStations.map((station) => {
+      const id = getStationId(station);
+      const forecast = worstForecastByStation.get(id);
 
-    let url = "http://127.0.0.1:8000/api/stations/current";
+      if (!forecast) return station;
 
-    if (mode === "forecast") {
-      const params = new URLSearchParams();
+      return {
+        ...station,
+        risk_level: getRiskLevel(forecast),
+        flood_risk: getRiskLevel(forecast),
+        forecast_time_vn: forecast.forecast_time_vn,
+        rain_3h_mm:
+          forecast.rain_3h_mm ??
+          forecast.rainfall_mm ??
+          forecast.precipitation_mm,
+        weather_station_name: forecast.weather_station_name,
+      };
+    });
+  }, [currentStations, worstForecastByStation]);
 
-      if (selectedForecastTime !== "WORST") {
-        params.append("forecast_time_vn", selectedForecastTime);
-      }
-
-      url = `http://127.0.0.1:8000/api/stations/forecast?${params.toString()}`;
-    }
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        setStations(data);
-        setLastUpdated(new Date());
-      })
-      .catch((err) => console.error("Failed to load stations:", err))
-      .finally(() => setIsRefreshing(false));
-  }
-
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/forecast-times")
-      .then((res) => res.json())
-      .then((data) => setForecastTimes(data))
-      .catch((err) => console.error("Failed to load forecast times:", err));
-  }, []);
-
-  useEffect(() => {
-    fetchStations();
-
-    const interval = setInterval(() => {
-      fetchStations();
-    }, AUTO_REFRESH_MS);
-
-    return () => clearInterval(interval);
-  }, [mode, selectedForecastTime]);
-
-  function handleManualRefresh() {
-    const now = Date.now();
-
-    if (now - lastManualRefresh < MANUAL_REFRESH_COOLDOWN_MS) return;
-
-    setLastManualRefresh(now);
-    fetchStations();
-  }
-
-  function handleModeChange(newMode) {
-    setMode(newMode);
-    setSelectedStation(null);
-  }
-
-  function handleProvinceChange(newProvince) {
-    setProvince(newProvince);
-    setSelectedStation(null);
-  }
-
-  function handleForecastTimeChange(newTime) {
-    setSelectedForecastTime(newTime);
-    setSelectedStation(null);
-  }
+  const stations =
+    mode === "forecast" ? forecastStations : currentStationsWithRisk;
 
   const cleanedStations = useMemo(() => {
     return stations.map((station) => ({
@@ -134,57 +143,207 @@ export default function StationMap() {
   }, [cleanedStations]);
 
   const filteredStations = useMemo(() => {
-    if (province === "ALL") return cleanedStations;
+    let result = cleanedStations;
 
-    return cleanedStations.filter((station) => station.province === province);
-  }, [cleanedStations, province]);
+    if (province !== "ALL") {
+      result = result.filter((station) => station.province === province);
+    }
 
-  const refreshDisabled =
-    isRefreshing || Date.now() - lastManualRefresh < MANUAL_REFRESH_COOLDOWN_MS;
+    if (mode === "forecast" && selectedForecastTime !== "WORST") {
+      result = result.filter(
+        (station) => station.forecast_time_vn === selectedForecastTime
+      );
+    }
+
+    if (riskFilter === "AT_RISK") {
+      result = result.filter(isAtRisk);
+    } else if (riskFilter !== "ALL") {
+      result = result.filter((station) => getRiskLevel(station) === riskFilter);
+    }
+
+    return result;
+  }, [cleanedStations, province, riskFilter, mode, selectedForecastTime]);
+
+  const stats = useMemo(() => {
+    const counts = {
+      UNKNOWN: 0,
+      SAFE: 0,
+      LOW: 0,
+      MEDIUM: 0,
+      HIGH: 0,
+    };
+
+    cleanedStations.forEach((station) => {
+      const risk = getRiskLevel(station);
+      if (counts[risk] !== undefined) counts[risk] += 1;
+      else counts.UNKNOWN += 1;
+    });
+
+    return {
+      total: cleanedStations.length,
+      visible: filteredStations.length,
+      atRisk: counts.LOW + counts.MEDIUM + counts.HIGH,
+      ...counts,
+    };
+  }, [cleanedStations, filteredStations]);
 
   return (
-    <div style={{ height: "100vh", position: "relative" }}>
-      <StationToolbar
-        mode={mode}
-        province={province}
-        provinces={provinces}
-        forecastTimes={forecastTimes}
-        selectedForecastTime={selectedForecastTime}
-        stationCount={filteredStations.length}
-        isRefreshing={isRefreshing}
-        refreshDisabled={refreshDisabled}
-        lastUpdated={lastUpdated}
-        onModeChange={handleModeChange}
-        onProvinceChange={handleProvinceChange}
-        onForecastTimeChange={handleForecastTimeChange}
-        onRefresh={handleManualRefresh}
-      />
+    <div className="dashboard-page">
+      <header className="dashboard-header">
+        <div>
+          <h1>
+            {pageType === "weather"
+              ? "Weather Map"
+              : "Viettel Flood Risk Dashboard"}
+          </h1>
+          <p>
+            {pageType === "weather"
+              ? "Large map view for monitoring weather and station conditions"
+              : "Weather forecast and telecom station flood monitoring"}
+          </p>
+        </div>
 
-      <StationInfoPanel
-        station={selectedStation}
-        mode={mode}
-        onClose={() => setSelectedStation(null)}
-      />
+        <div className="header-actions">
+          <button
+            className="refresh-button"
+            onClick={refreshNow}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
 
-      <Map
-        defaultCenter={{ lat: 16.0544, lng: 108.2022 }}
-        defaultZoom={6}
-        mapId="telecom-flood-risk-map"
-        style={{ width: "100%", height: "100%" }}
+          <div className="backend-status">● Backend Connected</div>
+        </div>
+      </header>
+
+      {pageType === "overview" && (
+        <section className="stat-grid">
+          <StatCard
+            title="Total Stations"
+            value={stats.total}
+            subtitle={`${stats.visible} visible`}
+          />
+          <StatCard
+            title="At-Risk Stations"
+            value={stats.atRisk}
+            subtitle="Low / Medium / High"
+          />
+          <StatCard
+            title="High Risk"
+            value={stats.HIGH}
+            subtitle="Highest warning level"
+          />
+          <StatCard
+            title="Medium Risk"
+            value={stats.MEDIUM}
+            subtitle="Monitor closely"
+          />
+          <StatCard
+            title="Safe Stations"
+            value={stats.SAFE}
+            subtitle={`${stats.UNKNOWN} unknown`}
+          />
+        </section>
+      )}
+
+      <section
+        className={
+          pageType === "weather" ? "dashboard-grid map-only" : "dashboard-grid"
+        }
       >
-        <ProvinceBoundary province={province} />
-        <AutoFitProvince stations={filteredStations} province={province} />
+        <div className="map-card">
+          <StationToolbar
+            mode={mode}
+            province={province}
+            provinces={provinces}
+            forecastTimes={forecastTimes}
+            selectedForecastTime={selectedForecastTime}
+            riskFilter={riskFilter}
+            stationCount={filteredStations.length}
+            lastUpdated={lastUpdated}
+            onModeChange={(value) => {
+              setMode(value);
+              setSelectedStation(null);
+              if (value === "current") setSelectedForecastTime("WORST");
+            }}
+            onProvinceChange={(value) => {
+              setProvince(value);
+              setSelectedStation(null);
+            }}
+            onRiskFilterChange={(value) => {
+              setRiskFilter(value);
+              setSelectedStation(null);
+            }}
+            onForecastTimeChange={(value) => {
+              setSelectedForecastTime(value);
+              setSelectedStation(null);
+            }}
+          />
 
-        {mode === "forecast" && (
-          <FloodAffectedZones stations={filteredStations} />
+          <div className="map-container">
+            <GoogleMap
+              defaultCenter={{ lat: 16.0544, lng: 108.2022 }}
+              defaultZoom={6}
+              mapId="telecom-flood-risk-map"
+              style={{ width: "100%", height: "100%" }}
+            >
+              <ProvinceBoundary province={province} />
+              <AutoFitProvince stations={filteredStations} province={province} />
+
+              {mode === "forecast" && (
+                <FloodAffectedZones stations={filteredStations} />
+              )}
+
+              <ClusteredStationMarkers
+                stations={filteredStations}
+                onStationClick={setSelectedStation}
+                mode={mode}
+              />
+            </GoogleMap>
+          </div>
+        </div>
+
+        {pageType === "overview" && (
+          <aside className="details-card">
+            <h2>Station Details</h2>
+            <p>Select a station on the map</p>
+
+            <StationInfoPanel
+              station={selectedStation}
+              mode={mode}
+              onClose={() => setSelectedStation(null)}
+            />
+
+            <div className="risk-summary">
+              <h3>Risk Summary</h3>
+              <RiskRow label="High" value={stats.HIGH} />
+              <RiskRow label="Medium" value={stats.MEDIUM} />
+              <RiskRow label="Low" value={stats.LOW} />
+              <RiskRow label="Safe" value={stats.SAFE} />
+              <RiskRow label="Unknown" value={stats.UNKNOWN} />
+            </div>
+          </aside>
         )}
+      </section>
+    </div>
+  );
+}
 
-        <ClusteredStationMarkers
-          stations={filteredStations}
-          onStationClick={setSelectedStation}
-          mode={mode}
-        />
-      </Map>
+function StatCard({ title, value, subtitle }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-title">{title}</div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-subtitle">{subtitle}</div>
+    </div>
+  );
+}
+
+function RiskRow({ label, value }) {
+  return (
+    <div className="risk-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }

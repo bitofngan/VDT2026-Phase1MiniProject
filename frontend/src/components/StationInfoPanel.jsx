@@ -1,53 +1,69 @@
 export default function StationInfoPanel({ station, mode, onClose }) {
-  if (!station) return null;
+  if (!station) {
+    return (
+      <div className="station-panel-empty">
+        <p>No station selected.</p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 12,
-        right: 12,
-        zIndex: 10,
-        width: 290,
-        background: "white",
-        padding: 14,
-        borderRadius: 10,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
-      }}
-    >
-      <button onClick={onClose} style={{ float: "right" }}>
-        ×
-      </button>
+    <div className="station-panel">
+      <div className="station-panel-header">
+        <div>
+          <h3>{station.name || station.station_name || station.telecom_station_name}</h3>
+          <p>{station.id || station.station_id || station.telecom_station_id}</p>
+        </div>
 
-      <h3>{station.name}</h3>
+        <button className="station-panel-close" onClick={onClose}>
+          ×
+        </button>
+      </div>
 
-      <p><b>ID:</b> {station.id}</p>
-      <p><b>Province:</b> {station.province}</p>
-      <p><b>Elevation:</b> {station.elevation_m ?? "N/A"} m</p>
+      <div className="station-panel-section">
+        <InfoRow label="Province" value={station.province} />
+        <InfoRow label="Elevation" value={`${station.elevation_m ?? "N/A"} m`} />
+      </div>
 
       {mode === "current" ? (
-        <>
-          <hr />
-          <p><b>Current weather</b></p>
-          <p><b>Temperature:</b> {station.current_temp_c ?? "N/A"} °C</p>
-          <p><b>Rain:</b> {station.current_precip_mm ?? "N/A"} mm</p>
-          <p><b>Wind:</b> {station.current_wind_mps ?? "N/A"} m/s</p>
-          <p><b>Humidity:</b> {station.current_humidity ?? "N/A"}%</p>
-          <p><b>Pressure:</b> {station.current_pressure_mb ?? "N/A"} mb</p>
-          <p><b>Condition:</b> {station.current_condition ?? "N/A"}</p>
-          <p><b>Observed at:</b> {station.current_weather_time ?? "N/A"}</p>
-        </>
+        <div className="station-panel-section">
+          <h4>Current Weather</h4>
+          <InfoRow label="Temperature" value={`${station.current_temp_c ?? "N/A"} °C`} />
+          <InfoRow label="Rain" value={`${station.current_precip_mm ?? "N/A"} mm`} />
+          <InfoRow label="Wind" value={`${station.current_wind_mps ?? "N/A"} m/s`} />
+          <InfoRow label="Humidity" value={`${station.current_humidity ?? "N/A"}%`} />
+          <InfoRow label="Pressure" value={`${station.current_pressure_mb ?? "N/A"} mb`} />
+          <InfoRow label="Condition" value={station.current_condition ?? "N/A"} />
+          <InfoRow label="Observed at" value={station.current_weather_time ?? "N/A"} />
+        </div>
       ) : (
-        <>
-          <hr />
-          <p><b>Forecast flood risk</b></p>
-          <p><b>Risk:</b> {station.flood_risk ?? "N/A"}</p>
-          <p><b>Rain 3h:</b> {station.precip_3h_mm ?? "N/A"} mm</p>
-          <p><b>Rain 24h:</b> {station.precip_24h_mm ?? "N/A"} mm</p>
-          <p><b>Forecast time:</b> {station.forecast_time_vn ?? "N/A"}</p>
-          <p><b>Reason:</b> {station.risk_reason ?? "N/A"}</p>
-        </>
+        <div className="station-panel-section">
+          <h4>Forecast Flood Risk</h4>
+          <InfoRow
+            label="Risk"
+            value={station.flood_risk || station.risk_level || "N/A"}
+          />
+          <InfoRow
+            label="Rain 3h"
+            value={`${station.precip_3h_mm ?? station.rain_3h_mm ?? "N/A"} mm`}
+          />
+          <InfoRow
+            label="Rain 24h"
+            value={`${station.precip_24h_mm ?? "N/A"} mm`}
+          />
+          <InfoRow label="Forecast time" value={station.forecast_time_vn ?? "N/A"} />
+          <InfoRow label="Reason" value={station.risk_reason ?? "N/A"} />
+        </div>
       )}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div className="station-info-row">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }

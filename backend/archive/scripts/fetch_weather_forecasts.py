@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
-from weather_station_loader import load_weather_stations_from_csv
+from backend.archive.scripts.weather_station_loader import load_weather_stations_from_csv
 
 
 # ============================================================

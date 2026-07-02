@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const RISK_ORDER = {
   HIGH: 1,
@@ -19,27 +19,7 @@ function isAtRisk(station) {
   return risk === "LOW" || risk === "MEDIUM" || risk === "HIGH";
 }
 
-function getStationId(station) {
-  return station.id || station.station_id || station.telecom_station_id || "-";
-}
-
-function getStationName(station) {
-  return station.name || station.station_name || station.telecom_station_name || "-";
-}
-
-function getForecastTime(station) {
-  return station.forecast_time_vn || station.forecast_time || "-";
-}
-
-function getRainfall(station) {
-  const value =
-    station.rain_3h_mm ??
-    station.rainfall_mm ??
-    station.precipitation_mm ??
-    station.precipitation_3h_mm ??
-    station.past3hprecip_mm ??
-    station.rain_mm;
-
+function formatRainfall(value) {
   if (value === undefined || value === null || value === "") return "-";
 
   const numberValue = Number(value);
@@ -48,25 +28,50 @@ function getRainfall(station) {
   return numberValue.toFixed(2);
 }
 
-function getWeatherStationName(station) {
-  return (
-    station.weather_station_name ||
-    station.nearest_weather_station_name ||
-    station.weather_name ||
-    station.matched_weather_station_name ||
-    "-"
-  );
+function formatForecastTime(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+
+  return `${day}/${month}/${year} - ${hour}:${minute}:${second}`;
 }
 
-export default function RiskForecastTable({
-  stations = [],
-  lastUpdated,
-  isRefreshing,
-  onRefresh,
-}) {
+export default function RiskForecastTable() {
+  const [stations, setStations] = useState([]);
   const [provinceFilter, setProvinceFilter] = useState("ALL");
   const [riskFilter, setRiskFilter] = useState("AT_RISK");
   const [searchText, setSearchText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  async function fetchRiskForecastTable() {
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/risk-forecast-table");
+      const data = await res.json();
+
+      setStations(data);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error("Failed to load risk forecast table:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchRiskForecastTable();
+  }, []);
 
   const provinces = useMemo(() => {
     return [...new Set(stations.map((s) => s.province).filter(Boolean))].sort();
@@ -90,10 +95,12 @@ export default function RiskForecastTable({
 
       result = result.filter((station) => {
         return (
-          String(getStationId(station)).toLowerCase().includes(keyword) ||
-          String(getStationName(station)).toLowerCase().includes(keyword) ||
+          String(station.id || "").toLowerCase().includes(keyword) ||
+          String(station.name || "").toLowerCase().includes(keyword) ||
           String(station.province || "").toLowerCase().includes(keyword) ||
-          String(getWeatherStationName(station)).toLowerCase().includes(keyword)
+          String(station.weather_station_name || "")
+            .toLowerCase()
+            .includes(keyword)
         );
       });
     }
@@ -131,15 +138,15 @@ export default function RiskForecastTable({
 
         <button
           className="refresh-button"
-          onClick={onRefresh}
-          disabled={isRefreshing}
+          onClick={fetchRiskForecastTable}
+          disabled={isLoading}
         >
-          {isRefreshing ? "Refreshing..." : "Refresh"}
+          {isLoading ? "Loading..." : "Refresh"}
         </button>
       </header>
 
       <section className="forecast-summary-grid">
-        <ForecastSummaryCard title="Total Forecast Rows" value={summary.total} />
+        <ForecastSummaryCard title="At-Risk Rows" value={summary.total} />
         <ForecastSummaryCard title="Shown" value={summary.shown} />
         <ForecastSummaryCard title="High Risk" value={summary.high} />
         <ForecastSummaryCard title="Medium Risk" value={summary.medium} />
@@ -183,7 +190,6 @@ export default function RiskForecastTable({
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
-              <option value="SAFE">Safe</option>
               <option value="UNKNOWN">Unknown</option>
             </select>
           </label>
@@ -199,6 +205,7 @@ export default function RiskForecastTable({
                 <th>Risk</th>
                 <th>Forecast Time</th>
                 <th>3h Rainfall</th>
+                <th>24h Rainfall</th>
                 <th>Weather Station</th>
               </tr>
             </thead>
@@ -208,25 +215,26 @@ export default function RiskForecastTable({
                 const risk = getRiskLevel(station);
 
                 return (
-                  <tr key={`${getStationId(station)}-${getForecastTime(station)}-${index}`}>
-                    <td>{getStationId(station)}</td>
-                    <td>{getStationName(station)}</td>
+                  <tr key={`${station.id}-${station.forecast_time_vn}-${index}`}>
+                    <td>{station.id || "-"}</td>
+                    <td>{station.name || "-"}</td>
                     <td>{station.province || "-"}</td>
                     <td>
                       <span className={`risk-badge risk-${risk.toLowerCase()}`}>
                         {risk}
                       </span>
                     </td>
-                    <td>{getForecastTime(station)}</td>
-                    <td>{getRainfall(station)} mm</td>
-                    <td>{getWeatherStationName(station)}</td>
+                    <td>{formatForecastTime(station.forecast_time_vn)}</td>
+                    <td>{formatRainfall(station.rain_3h_mm)} mm</td>
+                    <td>{formatRainfall(station.precip_24h_mm)} mm</td>
+                    <td>{station.weather_station_name || "-"}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
 
-          {!isRefreshing && filteredStations.length === 0 && (
+          {!isLoading && filteredStations.length === 0 && (
             <div className="empty-table-message">
               No stations match the current filters.
             </div>

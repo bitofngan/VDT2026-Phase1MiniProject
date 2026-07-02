@@ -1,8 +1,8 @@
 import csv
 import os
 
-from weather_station_loader import load_weather_stations_from_csv
-from nearest_weather_station import find_nearest_weather_station
+from backend.archive.scripts.weather_station_loader import load_weather_stations_from_csv
+from backend.archive.scripts.nearest_weather_station import find_nearest_weather_station
 
 
 # ============================================================

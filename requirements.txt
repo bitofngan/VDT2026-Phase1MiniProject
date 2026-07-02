@@ -5,3 +5,5 @@ shapely
 pyogrio
 fastapi
 uvicorn
+feedparser
+tzdata

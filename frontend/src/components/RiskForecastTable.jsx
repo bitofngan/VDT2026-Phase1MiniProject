@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
+import { formatVietnamTime } from "../utils/formatters";
 const RISK_ORDER = {
   HIGH: 1,
   MEDIUM: 2,
@@ -131,8 +131,8 @@ export default function RiskForecastTable() {
         <div>
           <h1>Risk Forecast</h1>
           <p>
-            Stations with predicted flood risk in the next 5–7 days
-            {lastUpdated ? ` · Updated ${lastUpdated.toLocaleTimeString()}` : ""}
+            Stations with predicted flood risk in the next 7 days
+            {lastUpdated ? ` · Updated ${formatVietnamTime(lastUpdated)}` : ""}
           </p>
         </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatVietnamTime } from "../utils/formatters";
 
 export default function DisasterEventsPage() {
   const [activeEvents, setActiveEvents] = useState([]);
@@ -35,7 +36,7 @@ export default function DisasterEventsPage() {
     setIsRefreshing(true);
 
     try {
-      await fetch("http://127.0.0.1:8000/api/disaster-events/refresh", {
+      await fetch("http://127.0.0.1:8000/api/admin/refresh-disasters", {
         method: "POST",
       });
 
@@ -58,7 +59,7 @@ export default function DisasterEventsPage() {
           <h1>Disaster Events</h1>
           <p>
             Active storms, floods, and heavy rain events near Vietnam
-            {lastUpdated ? ` · Updated ${lastUpdated.toLocaleTimeString()}` : ""}
+            {lastUpdated ? ` · Updated ${formatVietnamTime(lastUpdated)}` : ""}
           </p>
         </div>
 
@@ -124,7 +125,7 @@ export default function DisasterEventsPage() {
             <tbody>
               {historyEvents.map((event) => (
                 <tr key={event.id}>
-                  <td>{event.fetched_at_utc || "-"}</td>
+                  <td>{formatVietnamTime(event.fetched_at_utc)}</td>
                   <td>{event.name || "-"}</td>
                   <td>{event.type || "-"}</td>
                   <td>{event.severity || "-"}</td>
@@ -148,6 +149,15 @@ export default function DisasterEventsPage() {
           )}
         </div>
       </section>
+      {isRefreshing && (
+      <div className="refresh-overlay">
+        <div className="refresh-modal">
+          <div className="refresh-spinner" />
+          <h2>Please wait</h2>
+          <p>Fetching latest disaster event information...</p>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -176,7 +186,7 @@ function EventCard({ event }) {
       <div className="event-meta">
         <span>Severity: {event.severity || "UNKNOWN"}</span>
         <span>Source: {event.source || "-"}</span>
-        <span>Updated: {event.last_update_utc || "-"}</span>
+        <span>Updated: {formatVietnamTime(event.last_update_utc)}</span>
       </div>
 
       {event.url && (

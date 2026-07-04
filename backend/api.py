@@ -212,7 +212,7 @@ def get_risk_forecast_table():
                 r.precip_24h_mm,
 
                 r.weather_station_id,
-                w.name AS weather_station_name,
+                COALESCE(w.name, r.weather_station_id) AS weather_station_name,
                 r.risk_reason,
 
                 ROW_NUMBER() OVER (

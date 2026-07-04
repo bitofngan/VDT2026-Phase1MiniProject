@@ -1,3 +1,8 @@
+import {
+  formatForecastTime,
+  formatRiskReason,
+} from "../utils/formatters";
+
 export default function StationInfoPanel({ station, mode, onClose }) {
   if (!station) {
     return (
@@ -51,8 +56,8 @@ export default function StationInfoPanel({ station, mode, onClose }) {
             label="Rain 24h"
             value={`${station.precip_24h_mm ?? "N/A"} mm`}
           />
-          <InfoRow label="Forecast time" value={station.forecast_time_vn ?? "N/A"} />
-          <InfoRow label="Reason" value={station.risk_reason ?? "N/A"} />
+          <InfoRow label="Forecast time" value={formatForecastTime(station.forecast_time_vn)} />
+          <InfoRow label="Reason" value={formatRiskReason(station.risk_reason)} />
         </div>
       )}
     </div>

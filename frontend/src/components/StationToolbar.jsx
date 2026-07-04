@@ -1,3 +1,5 @@
+import { formatVietnamTime } from "../utils/formatters";
+
 function buildForecastOptions(forecastTimes) {
   const options = [
     {
@@ -53,7 +55,7 @@ export default function StationToolbar({
           <h2>Vietnam Station Map</h2>
           <p>
             {stationCount} stations shown
-            {lastUpdated ? ` · Updated ${lastUpdated.toLocaleTimeString()}` : ""}
+            {lastUpdated ? ` · Updated ${formatVietnamTime(lastUpdated)}` : ""}
           </p>
         </div>
 

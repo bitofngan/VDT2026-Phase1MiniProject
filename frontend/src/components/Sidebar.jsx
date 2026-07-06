@@ -31,6 +31,12 @@ export default function Sidebar({ activePage, onPageChange }) {
           </button>
         ))}
       </nav>
+      <button
+        className={`sidebar-button ${activePage === "admin" ? "active" : ""}`}
+        onClick={() => onPageChange("admin")}
+      >
+        Admin
+      </button>
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-title">System Version</div>

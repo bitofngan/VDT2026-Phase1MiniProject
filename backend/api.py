@@ -8,6 +8,39 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.services.update_pipeline_service import update_weather_pipeline, update_all_data
 from backend.services.disaster_update_service import update_disaster_events
 
+from contextlib import asynccontextmanager
+from backend.background_updater import start_background_updater
+
+import os
+from pydantic import BaseModel
+from dotenv import load_dotenv
+from fastapi import Header, Depends
+
+load_dotenv()
+
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "ABCD1234")  # Change this to a secure token in production
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def require_admin(authorization: str | None = Header(default=None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization token.")
+
+    expected = f"Bearer {ADMIN_TOKEN}"
+
+    if authorization != expected:
+        raise HTTPException(status_code=403, detail="Invalid admin token.")
+
+    return True
+
+
+
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DB_PATH = ROOT_DIR / "backend" / "database" / "flood_risk.db"
@@ -18,7 +51,25 @@ LAST_WEATHER_REFRESH_TS = 0
 LAST_DISASTER_REFRESH_TS = 0
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app):
+    start_background_updater()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
+@app.post("/api/auth/login")
+def admin_login(request: LoginRequest):
+    if request.username != ADMIN_USERNAME or request.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+
+    return {
+        "access_token": ADMIN_TOKEN,
+        "token_type": "bearer",
+        "username": ADMIN_USERNAME,
+    }
+
 
 app.add_middleware(
     CORSMiddleware,

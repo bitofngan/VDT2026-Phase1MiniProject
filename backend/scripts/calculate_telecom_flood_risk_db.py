@@ -132,10 +132,30 @@ def get_weather_forecasts(connection, weather_station_id):
         (weather_station_id,)
     ).fetchall()
 
-
-def clear_previous_results(connection):
-    connection.execute("DELETE FROM telecom_weather_station_mapping")
-    connection.execute("DELETE FROM telecom_flood_risk_forecast")
+def remove_duplicate_flood_risk_results(connection):
+    connection.execute("""
+        DELETE FROM telecom_flood_risk_forecast
+        WHERE id NOT IN (
+            SELECT MAX(id)
+            FROM telecom_flood_risk_forecast
+            GROUP BY
+                telecom_station_id,
+                weather_station_id,
+                forecast_time_utc,
+                forecast_time_vn,
+                temperature_c,
+                wind_speed_mps,
+                precip_3h_mm,
+                avg_precip_1h_mm,
+                precip_24h_mm,
+                estimated_1h_high_threshold_mm,
+                exceed_1h_threshold,
+                exceed_24h_threshold,
+                flood_risk,
+                risk_reason
+        )
+    """)
+    connection.commit()
 
 
 def bool_to_int(value):
@@ -282,8 +302,8 @@ def calculate_and_save_flood_risk(connection, telecom_station, weather_station, 
 def main():
     connection = get_connection()
 
-    print("Clearing previous mapping and flood-risk results...")
-    clear_previous_results(connection)
+    print("Removing duplicate flood-risk results only...")
+    remove_duplicate_flood_risk_results(connection)
 
     weather_stations = get_all_weather_stations(connection)
     telecom_stations = get_telecom_stations(connection)

@@ -167,10 +167,21 @@ def parse_weather_rows(raw_data, station):
     return rows
 
 
-def clear_old_forecast_data(connection):
-    connection.execute("DELETE FROM telecom_flood_risk_forecast")
-    connection.execute("DELETE FROM telecom_weather_station_mapping")
-    connection.execute("DELETE FROM weather_forecast")
+def remove_duplicate_weather_forecasts(connection):
+    connection.execute("""
+        DELETE FROM weather_forecast
+        WHERE id NOT IN (
+            SELECT MAX(id)
+            FROM weather_forecast
+            GROUP BY
+                weather_station_id,
+                forecast_time_utc,
+                forecast_time_vn,
+                temperature_c,
+                wind_speed_mps,
+                precip_3h_mm
+        )
+    """)
     connection.commit()
 
 
@@ -205,7 +216,7 @@ def update_weather_forecasts():
     connection = get_connection()
 
     print("Clearing old forecast, mapping, and flood-risk data...")
-    clear_old_forecast_data(connection)
+    remove_duplicate_weather_forecasts(connection)
 
     weather_stations = get_weather_stations(connection)
 

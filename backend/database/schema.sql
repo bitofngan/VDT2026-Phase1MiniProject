@@ -33,18 +33,16 @@ CREATE TABLE weather_forecast (
     forecast_time_vn TEXT NOT NULL,
     temperature_c REAL,
     wind_speed_mps REAL,
-    precip_3h_mm REAL NOT NULL,
+    precip_3h_mm REAL,
     FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
 );
 
 CREATE TABLE telecom_weather_station_mapping (
     telecom_station_id TEXT PRIMARY KEY,
-    weather_station_id TEXT NOT NULL,
-    distance_km REAL NOT NULL,
-    max_radius_km REAL NOT NULL,
-    radius_status TEXT NOT NULL CHECK (
-        radius_status IN ('within_radius', 'outside_max_radius')
-    ),
+    weather_station_id TEXT,
+    distance_km REAL,
+    max_radius_km REAL,
+    radius_status TEXT ,
     FOREIGN KEY (telecom_station_id) REFERENCES telecom_station(id),
     FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
 );
@@ -52,25 +50,19 @@ CREATE TABLE telecom_weather_station_mapping (
 CREATE TABLE telecom_flood_risk_forecast (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     telecom_station_id TEXT NOT NULL,
-    weather_station_id TEXT NOT NULL,
-    forecast_time_utc TEXT NOT NULL,
-    forecast_time_vn TEXT NOT NULL,
+    weather_station_id TEXT,
+    forecast_time_utc TEXT,
+    forecast_time_vn TEXT,
     temperature_c REAL,
     wind_speed_mps REAL,
-    precip_3h_mm REAL NOT NULL,
-    avg_precip_1h_mm REAL NOT NULL,
-    precip_24h_mm REAL NOT NULL,
-    estimated_1h_high_threshold_mm REAL NOT NULL,
-    exceed_1h_threshold INTEGER NOT NULL CHECK (
-        exceed_1h_threshold IN (0, 1)
-    ),
-    exceed_24h_threshold INTEGER NOT NULL CHECK (
-        exceed_24h_threshold IN (0, 1)
-    ),
-    flood_risk TEXT NOT NULL CHECK (
-        flood_risk IN ('SAFE', 'LOW', 'MEDIUM', 'HIGH')
-    ),
-    risk_reason TEXT NOT NULL,
+    precip_3h_mm REAL,
+    avg_precip_1h_mm REAL,
+    precip_24h_mm REAL,
+    estimated_1h_high_threshold_mm REAL,
+    exceed_1h_threshold INTEGER,
+    exceed_24h_threshold INTEGER,
+    flood_risk TEXT,
+    risk_reason TEXT,
     FOREIGN KEY (telecom_station_id) REFERENCES telecom_station(id),
     FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
 );
@@ -78,8 +70,8 @@ CREATE TABLE telecom_flood_risk_forecast (
 CREATE TABLE IF NOT EXISTS weather_current_observation (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     weather_station_id TEXT NOT NULL,
-    observation_time TEXT NOT NULL,
-    last_updated TEXT NOT NULL,
+    observation_time TEXT,
+    last_updated TEXT,
     temp_c REAL,
     wind_kph REAL,
     wind_mps REAL,
@@ -87,7 +79,7 @@ CREATE TABLE IF NOT EXISTS weather_current_observation (
     humidity INTEGER,
     pressure_mb REAL,
     condition_text TEXT,
-    source TEXT NOT NULL DEFAULT 'WeatherAPI',
-    fetched_at TEXT NOT NULL,
+    source TEXT DEFAULT 'WeatherAPI',
+    fetched_at TEXT,
     FOREIGN KEY (weather_station_id) REFERENCES weather_station(id)
 );

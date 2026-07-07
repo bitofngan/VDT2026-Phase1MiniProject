@@ -1,23 +1,38 @@
+/* =========================================================
+   1. Theme variables
+   ========================================================= */
+
 :root {
   --bg-main: #eef7f8;
   --bg-sidebar: #073b4c;
   --bg-sidebar-light: #0b5266;
   --bg-card: #ffffff;
+
   --primary: #118ab2;
   --primary-dark: #0b6f91;
   --primary-soft: #d8f3f8;
+
   --accent: #06d6a0;
   --accent-soft: #d9fff3;
+
   --safe: #16a34a;
   --low: #84cc16;
   --medium: #f59e0b;
   --high: #ef4444;
   --unknown: #64748b;
+
   --text-main: #0f172a;
   --text-muted: #64748b;
   --border: #cfe8ef;
+  --border-light: #e2e8f0;
+
   --shadow: 0 16px 36px rgba(7, 59, 76, 0.1);
 }
+
+
+/* =========================================================
+   2. App layout
+   ========================================================= */
 
 .app-shell {
   min-height: 100vh;
@@ -25,6 +40,25 @@
   display: flex;
   background: var(--bg-main);
 }
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-page,
+.forecast-page,
+.disaster-page,
+.admin-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 28px;
+}
+
+
+/* =========================================================
+   3. Sidebar
+   ========================================================= */
 
 .sidebar {
   width: 260px;
@@ -48,7 +82,7 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #06d6a0, #118ab2);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
   display: grid;
   place-items: center;
   font-weight: 900;
@@ -87,7 +121,7 @@
 }
 
 .sidebar-button.active {
-  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: white;
 }
 
@@ -106,20 +140,14 @@
   margin-bottom: 6px;
 }
 
-.main-content {
-  flex: 1;
-  min-width: 0;
-}
 
-.dashboard-page,
-.forecast-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 28px;
-}
+/* =========================================================
+   4. Headers and common buttons
+   ========================================================= */
 
 .dashboard-header,
-.forecast-header {
+.forecast-header,
+.disaster-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -128,17 +156,19 @@
 }
 
 .dashboard-header h1,
-.forecast-header h1 {
+.forecast-header h1,
+.disaster-header h1 {
   margin: 0;
   font-size: 30px;
   color: var(--text-main);
 }
 
 .dashboard-header p,
-.forecast-header p {
+.forecast-header p,
+.disaster-header p,
+.muted-text {
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 16px;
 }
 
 .header-actions {
@@ -151,7 +181,7 @@
   border: none;
   border-radius: 12px;
   padding: 12px 18px;
-  background: linear-gradient(135deg, #118ab2, #0b6f91);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: white;
   font-weight: 800;
   cursor: pointer;
@@ -160,6 +190,10 @@
 .refresh-button:disabled {
   background: #94a3b8;
   cursor: not-allowed;
+}
+
+.logout-button {
+  background: var(--high);
 }
 
 .backend-status {
@@ -171,6 +205,11 @@
   font-size: 14px;
 }
 
+
+/* =========================================================
+   5. Cards and summary grids
+   ========================================================= */
+
 .stat-grid,
 .forecast-summary-grid {
   display: grid;
@@ -179,13 +218,30 @@
   margin-bottom: 20px;
 }
 
+.disaster-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
 .stat-card,
-.forecast-summary-card {
+.forecast-summary-card,
+.map-card,
+.details-card,
+.blank-page,
+.forecast-table-card,
+.disaster-card,
+.admin-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 20px;
   box-shadow: var(--shadow);
+}
+
+.stat-card,
+.forecast-summary-card {
+  padding: 18px;
 }
 
 .stat-title,
@@ -210,6 +266,24 @@
   margin-top: 4px;
 }
 
+.blank-page {
+  margin: 28px;
+  padding: 28px;
+}
+
+.blank-page h1 {
+  margin: 0 0 8px;
+}
+
+.blank-page p {
+  color: var(--text-muted);
+}
+
+
+/* =========================================================
+   6. Dashboard map layout
+   ========================================================= */
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -219,16 +293,6 @@
 
 .dashboard-grid.map-only {
   grid-template-columns: 1fr;
-}
-
-.map-card,
-.details-card,
-.blank-page,
-.forecast-table-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
 }
 
 .map-card {
@@ -263,6 +327,11 @@
   height: calc(100vh - 230px);
   min-height: 680px;
 }
+
+
+/* =========================================================
+   7. Toolbar and filters
+   ========================================================= */
 
 .station-toolbar {
   width: 100%;
@@ -306,7 +375,7 @@
 }
 
 .map-tab.active {
-  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: white;
 }
 
@@ -359,6 +428,11 @@
   border-color: var(--primary);
 }
 
+
+/* =========================================================
+   8. Station details panel
+   ========================================================= */
+
 .risk-summary {
   margin-top: 22px;
 }
@@ -371,7 +445,7 @@
   display: flex;
   justify-content: space-between;
   padding: 11px 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-light);
   color: var(--text-main);
 }
 
@@ -433,7 +507,7 @@
 
 .station-panel-section {
   padding: 14px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .station-panel-section:last-child {
@@ -465,6 +539,11 @@
   word-break: break-word;
 }
 
+
+/* =========================================================
+   9. Map markers
+   ========================================================= */
+
 .station-marker {
   width: 9px;
   height: 9px;
@@ -477,7 +556,7 @@
   width: 38px;
   height: 38px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #118ab2, #06d6a0);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: white;
   display: grid;
   place-items: center;
@@ -487,21 +566,20 @@
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
 }
 
-.blank-page {
-  margin: 28px;
-  padding: 28px;
-}
 
-.blank-page h1 {
-  margin: 0 0 8px;
-}
+/* =========================================================
+   10. Tables
+   ========================================================= */
 
-.blank-page p {
-  color: var(--text-muted);
+.forecast-table-card,
+.disaster-card,
+.admin-card {
+  padding: 18px;
+  margin-bottom: 20px;
 }
 
 .forecast-table-card {
-  padding: 18px;
+  margin-bottom: 0;
 }
 
 .table-wrapper {
@@ -529,7 +607,7 @@
 
 .risk-table td {
   padding: 14px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-light);
   color: var(--text-main);
   font-size: 14px;
 }
@@ -537,6 +615,17 @@
 .risk-table tbody tr:hover {
   background: #f8fafc;
 }
+
+.empty-table-message {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+
+/* =========================================================
+   11. Risk badges and risk colors
+   ========================================================= */
 
 .risk-badge {
   display: inline-flex;
@@ -573,53 +662,30 @@
   color: #475569;
 }
 
-.empty-table-message {
-  padding: 24px;
-  text-align: center;
-  color: var(--text-muted);
+.forecast-risk-safe {
+  background: var(--safe);
 }
 
-.disaster-page {
-  width: 100%;
-  min-height: 100vh;
-  padding: 28px;
+.forecast-risk-low {
+  background: var(--low);
 }
 
-.disaster-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 18px;
-  margin-bottom: 22px;
+.forecast-risk-medium {
+  background: var(--medium);
 }
 
-.disaster-header h1 {
-  margin: 0;
-  font-size: 30px;
-  color: var(--text-main);
+.forecast-risk-high {
+  background: var(--high);
 }
 
-.disaster-header p,
-.muted-text {
-  margin: 6px 0 0;
-  color: var(--text-muted);
+.forecast-risk-unknown {
+  background: var(--unknown);
 }
 
-.disaster-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
-}
 
-.disaster-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  padding: 18px;
-  margin-bottom: 20px;
-}
+/* =========================================================
+   12. Disaster events
+   ========================================================= */
 
 .disaster-card h2 {
   margin: 0 0 14px;
@@ -682,6 +748,11 @@
   text-decoration: underline;
 }
 
+
+/* =========================================================
+   13. Loading overlay
+   ========================================================= */
+
 .refresh-overlay {
   position: fixed;
   inset: 0;
@@ -713,12 +784,17 @@
 .refresh-spinner {
   width: 42px;
   height: 42px;
-  border: 4px solid #d8f3f8;
+  border: 4px solid var(--primary-soft);
   border-top-color: var(--primary);
   border-radius: 999px;
   margin: 0 auto;
   animation: spin 0.8s linear infinite;
 }
+
+
+/* =========================================================
+   14. Login page
+   ========================================================= */
 
 .login-page {
   min-height: 100vh;
@@ -765,6 +841,15 @@
   font-weight: 800;
 }
 
+
+/* =========================================================
+   15. Admin page
+   ========================================================= */
+
+.admin-card h2 {
+  margin: 0 0 14px;
+}
+
 .admin-actions {
   display: flex;
   flex-wrap: wrap;
@@ -772,15 +857,247 @@
   margin-top: 20px;
 }
 
-.logout-button {
-  background: #ef4444;
+.admin-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
+
+.admin-form .refresh-button {
+  align-self: end;
+}
+
+.admin-delete-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.admin-message {
+  background: #e6f6f8;
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   16. Station weather report
+   ========================================================= */
+
+.station-report {
+  margin-top: 20px;
+}
+
+.station-report h3 {
+  margin-bottom: 4px;
+}
+
+.station-report h4 {
+  margin-top: 22px;
+  margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   17. Simple rainfall bar chart
+   Used for past rainfall
+   ========================================================= */
+
+.rainfall-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 220px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow-x: auto;
+  background: #f8fafc;
+}
+
+.rainfall-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 78px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+
+
+.rainfall-bar-wrap span {
+  margin-top: 6px;
+  white-space: nowrap;
+}
+
+.rainfall-bar {
+  width: 24px;
+  background: #2563eb;
+  border-radius: 6px 6px 0 0;
+}
+
+
+/* =========================================================
+   18. Scaled forecast rainfall chart
+   Used for forecasted 3h rainfall
+   ========================================================= */
+
+.rainfall-scale-chart {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.rainfall-scale-axis {
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 0 32px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.rainfall-scale-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.rainfall-scale-plot {
+  position: relative;
+  height: 220px;
+  padding: 12px 12px 32px;
+  min-width: 900px;
+}
+
+.rainfall-grid-lines {
+  position: absolute;
+  inset: 12px 12px 32px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.rainfall-grid-line {
+  border-top: 1px dashed #cbd5e1;
+}
+
+.rainfall-scale-bars {
+  position: relative;
+  z-index: 2;
+  height: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.danger-zone {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  z-index: 1;
+  font-size: 11px;
+  font-weight: 700;
+  padding-left: 8px;
+  pointer-events: none;
+}
+
+.danger-zone-high {
+  top: 12px;
+  height: 45px;
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+}
+
+.danger-zone-medium {
+  top: 57px;
+  height: 45px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+
+/* =========================================================
+   19. Forecast line charts
+   Used for temperature and wind
+   ========================================================= */
+
+.forecast-line-wrapper {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.forecast-axis {
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 20px 0;
+}
+
+.forecast-line-chart {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.forecast-line-inner {
+  min-width: 1600px;
+  padding: 12px;
+}
+
+
+.forecast-line-labels span {
+  white-space: nowrap;
+}
+
+.forecast-line-chart svg {
+  width: 1000px;
+  height: 240px;
+  display: block;
+}
+
+.forecast-line-labels {
+  display: grid;
+  grid-template-columns: repeat(56, 96px);
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+
+/* =========================================================
+   20. Animations
+   ========================================================= */
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
+
+
+/* =========================================================
+   21. Responsive layout
+   ========================================================= */
 
 @media (max-width: 1200px) {
   .stat-grid,
@@ -794,6 +1111,13 @@
 
   .details-card {
     min-height: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-form,
+  .admin-delete-form {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -812,17 +1136,21 @@
   }
 
   .dashboard-page,
-  .forecast-page {
+  .forecast-page,
+  .disaster-page,
+  .admin-page {
     padding: 18px;
   }
 
   .dashboard-header,
-  .forecast-header {
+  .forecast-header,
+  .disaster-header {
     flex-direction: column;
   }
 
   .stat-grid,
-  .forecast-summary-grid {
+  .forecast-summary-grid,
+  .disaster-summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -837,4 +1165,3 @@
     grid-template-columns: 1fr;
   }
 }
-

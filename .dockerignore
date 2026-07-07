@@ -1,0 +1,10 @@
+node_modules
+frontend/node_modules
+__pycache__
+*.pyc
+.git
+.venv
+venv
+weather_forecast_outputs
+outputs/weather_forecast_outputs
+*.log

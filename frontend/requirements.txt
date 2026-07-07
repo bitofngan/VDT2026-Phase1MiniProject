@@ -1,0 +1,9 @@
+requests
+python-dotenv
+geopandas
+shapely
+pyogrio
+fastapi
+uvicorn
+feedparser
+tzdata

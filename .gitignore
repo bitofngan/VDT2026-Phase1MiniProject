@@ -1,0 +1,48 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.local
+
+# =========================
+# Databases
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# CSV files
+# Ignore generated CSV files by default
+# =========================
+*.csv
+
+# But keep small sample/input CSV files if needed
+!data/weather_stations.csv
+!data/sample_weather_stations.csv
+!data/sample_telecom_stations.csv
+
+# =========================
+# Generated output folders
+# =========================
+weather_forecast_outputs/
+flood_risk_outputs/
+test_outputs/
+
+# =========================
+# IDE / OS files
+# =========================
+.vscode/
+.DS_Store
+Thumbs.db

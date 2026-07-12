@@ -21,6 +21,8 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+*.db-wal
+*.db-shm
 
 # =========================
 # CSV files
@@ -46,3 +48,5 @@ test_outputs/
 .vscode/
 .DS_Store
 Thumbs.db
+
+node_modules/

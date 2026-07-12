@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import time
+import sqlite3
 import requests
 from pathlib import Path
 from datetime import datetime, timezone
@@ -23,6 +24,9 @@ REQUEST_DELAY_SECONDS = 0.5
 MAX_CONSECUTIVE_FAILURES = 5
 REQUEST_TIMEOUT_SECONDS = 30
 
+DATABASE_RETRY_ATTEMPTS = 5
+DATABASE_RETRY_DELAY_SECONDS = 1
+
 
 class PermanentWeatherApiError(RuntimeError):
     pass
@@ -34,7 +38,9 @@ class TemporaryWeatherApiError(RuntimeError):
 
 def fetch_weather_from_windy(latitude, longitude):
     if not WINDY_API_KEY:
-        raise PermanentWeatherApiError("Missing WINDY_POINT_FORECAST_KEY in .env file.")
+        raise PermanentWeatherApiError(
+            "Missing WINDY_POINT_FORECAST_KEY in .env file."
+        )
 
     payload = {
         "lat": latitude,
@@ -52,15 +58,22 @@ def fetch_weather_from_windy(latitude, longitude):
             timeout=REQUEST_TIMEOUT_SECONDS,
         )
     except requests.Timeout as error:
-        raise TemporaryWeatherApiError(f"Windy request timed out: {error}") from error
+        raise TemporaryWeatherApiError(
+            f"Windy request timed out: {error}"
+        ) from error
     except requests.ConnectionError as error:
-        raise TemporaryWeatherApiError(f"Windy connection error: {error}") from error
+        raise TemporaryWeatherApiError(
+            f"Windy connection error: {error}"
+        ) from error
     except requests.RequestException as error:
-        raise TemporaryWeatherApiError(f"Windy request failed: {error}") from error
+        raise TemporaryWeatherApiError(
+            f"Windy request failed: {error}"
+        ) from error
 
     if response.status_code in (401, 403):
         raise PermanentWeatherApiError(
-            f"Invalid or unauthorized Windy API key. HTTP {response.status_code}: {response.text}"
+            f"Invalid or unauthorized Windy API key. "
+            f"HTTP {response.status_code}: {response.text}"
         )
 
     if response.status_code == 400:
@@ -75,29 +88,39 @@ def fetch_weather_from_windy(latitude, longitude):
 
     if response.status_code >= 500:
         raise TemporaryWeatherApiError(
-            f"Windy server error. HTTP {response.status_code}: {response.text}"
+            f"Windy server error. "
+            f"HTTP {response.status_code}: {response.text}"
         )
 
     if response.status_code != 200:
         raise TemporaryWeatherApiError(
-            f"Unexpected Windy API error. HTTP {response.status_code}: {response.text}"
+            f"Unexpected Windy API error. "
+            f"HTTP {response.status_code}: {response.text}"
         )
 
     try:
         data = response.json()
     except ValueError as error:
-        raise TemporaryWeatherApiError("Windy returned invalid JSON.") from error
+        raise TemporaryWeatherApiError(
+            "Windy returned invalid JSON."
+        ) from error
 
     if data.get("error") is True:
         message = data.get("message") or data.get("reason") or str(data)
 
         if "key" in message.lower() or "unauthorized" in message.lower():
-            raise PermanentWeatherApiError(f"Windy API authentication error: {message}")
+            raise PermanentWeatherApiError(
+                f"Windy API authentication error: {message}"
+            )
 
-        raise TemporaryWeatherApiError(f"Windy API returned error: {message}")
+        raise TemporaryWeatherApiError(
+            f"Windy API returned error: {message}"
+        )
 
     if "ts" not in data:
-        raise TemporaryWeatherApiError("Windy response missing forecast timestamps.")
+        raise TemporaryWeatherApiError(
+            "Windy response missing forecast timestamps."
+        )
 
     return data
 
@@ -132,19 +155,40 @@ def parse_weather_rows(raw_data, station):
     timestamps = raw_data.get("ts", [])
 
     if not timestamps:
-        raise TemporaryWeatherApiError("Windy response contains no forecast timestamps.")
+        raise TemporaryWeatherApiError(
+            "Windy response contains no forecast timestamps."
+        )
 
     vietnam_tz = ZoneInfo("Asia/Ho_Chi_Minh")
     rows = []
 
     for i, ts in enumerate(timestamps):
-        forecast_time_utc = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+        forecast_time_utc = datetime.fromtimestamp(
+            ts / 1000,
+            tz=timezone.utc,
+        )
         forecast_time_vn = forecast_time_utc.astimezone(vietnam_tz)
 
-        precip_raw = safe_get(raw_data, "past3hprecip-surface", i)
-        temp_raw = safe_get(raw_data, "temp-surface", i)
-        wind_u = safe_get(raw_data, "wind_u-surface", i)
-        wind_v = safe_get(raw_data, "wind_v-surface", i)
+        precip_raw = safe_get(
+            raw_data,
+            "past3hprecip-surface",
+            i,
+        )
+        temp_raw = safe_get(
+            raw_data,
+            "temp-surface",
+            i,
+        )
+        wind_u = safe_get(
+            raw_data,
+            "wind_u-surface",
+            i,
+        )
+        wind_v = safe_get(
+            raw_data,
+            "wind_v-surface",
+            i,
+        )
 
         precip_3h_mm = None
         if precip_raw is not None:
@@ -158,48 +202,78 @@ def parse_weather_rows(raw_data, station):
                 station["id"],
                 forecast_time_utc.isoformat(),
                 forecast_time_vn.isoformat(),
-                round(temperature_c, 2) if temperature_c is not None else None,
-                round(wind_speed, 2) if wind_speed is not None else None,
-                round(precip_3h_mm, 2) if precip_3h_mm is not None else None,
+                round(temperature_c, 2)
+                if temperature_c is not None
+                else None,
+                round(wind_speed, 2)
+                if wind_speed is not None
+                else None,
+                round(precip_3h_mm, 2)
+                if precip_3h_mm is not None
+                else None,
             )
         )
 
     return rows
 
 
+def configure_connection(connection):
+    connection.execute("PRAGMA busy_timeout = 30000")
+
+
 def remove_duplicate_weather_forecasts(connection):
-    connection.execute("""
+    connection.execute(
+        """
         DELETE FROM weather_forecast
         WHERE id NOT IN (
             SELECT MAX(id)
             FROM weather_forecast
             GROUP BY
                 weather_station_id,
+                forecast_time_utc
+        )
+        """
+    )
+    connection.commit()
+
+
+def insert_weather_rows(connection, rows):
+    inserted_rows = 0
+
+    for row in rows:
+        cursor = connection.execute(
+            """
+            INSERT INTO weather_forecast (
+                weather_station_id,
                 forecast_time_utc,
                 forecast_time_vn,
                 temperature_c,
                 wind_speed_mps,
                 precip_3h_mm
+            )
+            SELECT ?, ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM weather_forecast
+                WHERE weather_station_id = ?
+                  AND forecast_time_utc = ?
+            )
+            """,
+            (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[0],
+                row[1],
+            ),
         )
-    """)
-    connection.commit()
 
+        inserted_rows += cursor.rowcount
 
-def insert_weather_rows(connection, rows):
-    connection.executemany(
-        """
-        INSERT INTO weather_forecast (
-            weather_station_id,
-            forecast_time_utc,
-            forecast_time_vn,
-            temperature_c,
-            wind_speed_mps,
-            precip_3h_mm
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        rows,
-    )
+    return inserted_rows
 
 
 def get_weather_stations(connection):
@@ -212,17 +286,72 @@ def get_weather_stations(connection):
     ).fetchall()
 
 
+def save_weather_rows_with_retry(rows):
+    last_error = None
+
+    for attempt in range(1, DATABASE_RETRY_ATTEMPTS + 1):
+        connection = None
+
+        try:
+            connection = get_connection()
+            configure_connection(connection)
+
+            inserted_rows = insert_weather_rows(
+                connection,
+                rows,
+            )
+
+            connection.commit()
+            return inserted_rows
+
+        except sqlite3.OperationalError as error:
+            last_error = error
+
+            if connection is not None:
+                connection.rollback()
+
+            if "database is locked" not in str(error).lower():
+                raise
+
+            if attempt >= DATABASE_RETRY_ATTEMPTS:
+                raise
+
+            print(
+                "Database is locked. "
+                f"Retrying {attempt}/{DATABASE_RETRY_ATTEMPTS}..."
+            )
+
+            time.sleep(
+                DATABASE_RETRY_DELAY_SECONDS * attempt
+            )
+
+        finally:
+            if connection is not None:
+                connection.close()
+
+    raise last_error
+
+
 def update_weather_forecasts():
     connection = get_connection()
+    configure_connection(connection)
 
-    print("Clearing old forecast, mapping, and flood-risk data...")
+    print("Removing duplicate forecast data...")
     remove_duplicate_weather_forecasts(connection)
 
-    weather_stations = get_weather_stations(connection)
+    weather_station_rows = get_weather_stations(connection)
+
+    weather_stations = [
+        dict(station)
+        for station in weather_station_rows
+    ]
+
+    connection.close()
 
     if not weather_stations:
-        connection.close()
-        raise PermanentWeatherApiError("No weather stations found in database.")
+        raise PermanentWeatherApiError(
+            "No weather stations found in database."
+        )
 
     total_rows = 0
     failed = []
@@ -230,34 +359,49 @@ def update_weather_forecasts():
 
     print("Weather stations:", len(weather_stations))
 
-    for index, station in enumerate(weather_stations, start=1):
+    for index, station in enumerate(
+        weather_stations,
+        start=1,
+    ):
         station_id = station["id"]
         station_name = station["name"]
 
         try:
-            print(f"[{index}/{len(weather_stations)}] Fetching {station_id} {station_name}")
+            print(
+                f"[{index}/{len(weather_stations)}] "
+                f"Fetching {station_id} {station_name}"
+            )
 
             raw_data = fetch_weather_from_windy(
                 station["latitude"],
                 station["longitude"],
             )
 
-            rows = parse_weather_rows(raw_data, station)
-            insert_weather_rows(connection, rows)
-            connection.commit()
+            rows = parse_weather_rows(
+                raw_data,
+                station,
+            )
 
-            total_rows += len(rows)
+            inserted_rows = save_weather_rows_with_retry(
+                rows
+            )
+
+            total_rows += inserted_rows
             consecutive_failures = 0
 
-            print(f"[{index}/{len(weather_stations)}] OK {station_id}: inserted {len(rows)} rows")
+            duplicate_rows = len(rows) - inserted_rows
+
+            print(
+                f"[{index}/{len(weather_stations)}] "
+                f"OK {station_id}: "
+                f"inserted {inserted_rows} rows, "
+                f"skipped {duplicate_rows} duplicates"
+            )
 
         except PermanentWeatherApiError:
-            connection.rollback()
-            connection.close()
             raise
 
         except TemporaryWeatherApiError as error:
-            connection.rollback()
             consecutive_failures += 1
 
             failed.append(
@@ -269,21 +413,24 @@ def update_weather_forecasts():
             )
 
             print(
-                f"[{index}/{len(weather_stations)}] FAILED {station_id}: {error}"
+                f"[{index}/{len(weather_stations)}] "
+                f"FAILED {station_id}: {error}"
             )
             print(
-                f"Consecutive failures: {consecutive_failures}/{MAX_CONSECUTIVE_FAILURES}"
+                f"Consecutive failures: "
+                f"{consecutive_failures}/"
+                f"{MAX_CONSECUTIVE_FAILURES}"
             )
 
             if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
-                connection.close()
                 raise TemporaryWeatherApiError(
-                    f"Windy API failed {MAX_CONSECUTIVE_FAILURES} consecutive times. "
+                    f"Windy API failed "
+                    f"{MAX_CONSECUTIVE_FAILURES} "
+                    "consecutive times. "
                     "Aborting update to avoid unnecessary API calls."
-                )
+                ) from error
 
         except Exception as error:
-            connection.rollback()
             consecutive_failures += 1
 
             failed.append(
@@ -295,25 +442,26 @@ def update_weather_forecasts():
             )
 
             print(
-                f"[{index}/{len(weather_stations)}] UNEXPECTED FAILURE {station_id}: {error}"
+                f"[{index}/{len(weather_stations)}] "
+                f"UNEXPECTED FAILURE {station_id}: {error}"
             )
             print(
-                f"Consecutive failures: {consecutive_failures}/{MAX_CONSECUTIVE_FAILURES}"
+                f"Consecutive failures: "
+                f"{consecutive_failures}/"
+                f"{MAX_CONSECUTIVE_FAILURES}"
             )
 
             if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
-                connection.close()
                 raise RuntimeError(
-                    f"Unexpected errors occurred {MAX_CONSECUTIVE_FAILURES} consecutive times. "
-                    "Aborting update."
-                )
+                    f"Unexpected errors occurred "
+                    f"{MAX_CONSECUTIVE_FAILURES} "
+                    "consecutive times. Aborting update."
+                ) from error
 
         time.sleep(REQUEST_DELAY_SECONDS)
 
-    connection.close()
-
     return {
-        "success": True,
+        "success": len(failed) == 0,
         "weather_stations": len(weather_stations),
         "forecast_rows_inserted": total_rows,
         "failed_count": len(failed),
